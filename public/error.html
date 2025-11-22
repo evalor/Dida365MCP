@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorization Failed</title>
+    <style>
+        * {
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: white;
+        }
+
+        .container {
+            padding: 3rem;
+            border-radius: 1rem;
+            text-align: center;
+            max-width: 400px;
+            margin-bottom: 5rem;
+        }
+
+        .error-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .error-icon img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        p {
+            color: #34495e;
+            line-height: 1.2;
+            font-size: 20px;
+        }
+
+        .error-message {
+            background: #fdf2f2;
+            border: 1px solid #f5c6cb;
+            border-radius: 0.5rem;
+            padding: 0.6rem;
+            margin: 1rem 0;
+            color: #c0392b;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .retry-info {
+            color: #0000005c;
+            font-size: 14px;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0.7rem;
+            left: 0;
+            right: 0;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #666;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="error-icon">
+            <img src="./static/logo.png" alt="Dida365 MCP Server Logo">
+        </div>
+        <div class="error-message">{{ERROR_MESSAGE}}</div>
+        <div class="retry-info">Please close this page and return to your conversation with AI to retry authorization
+        </div>
+    </div>
+    <footer class="footer">Dida365 MCP Server</footer>
+</body>
+
+</html>

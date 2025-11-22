@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Not Found</title>
+    <style>
+        * {
+            user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: white;
+        }
+
+        .container {
+            padding: 3rem;
+            border-radius: 1rem;
+            text-align: center;
+            max-width: 400px;
+            margin-bottom: 5rem;
+        }
+
+        .not-found-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .not-found-icon img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+
+        .not-found-message {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 0.5rem;
+            padding: 0.6rem;
+            margin: 1rem 0;
+            color: #92400e;
+            font-size: 16px;
+            line-height: 1.4;
+            font-weight: bold;
+        }
+
+        .not-found-info {
+            color: #0000005c;
+            font-size: 14px;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0.7rem;
+            left: 0;
+            right: 0;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #666;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="not-found-icon">
+            <img src="./static/logo.png" alt="Dida365 MCP Server Logo">
+        </div>
+        <div class="not-found-message">Page Not Found</div>
+    </div>
+    <footer class="footer">Dida365 MCP Server</footer>
+</body>
+
+</html>

@@ -1,0 +1,43 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build output
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OAuth Credentials
+config/oauth.json
+config/tokens.json
+config/tokens.encrypted.json
+
+# Token Storage
+.dida365-mcp/
+tokens.json
+
+# Sensitive Files
+*.secret
+*.key
+*.pem
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+logs/
+*.log

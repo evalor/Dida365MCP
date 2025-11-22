@@ -1,0 +1,38 @@
+{
+    "name": "dida365-mcp-server",
+    "version": "1.0.0",
+    "description": "MCP Server for Dida365 (TickTick) Task Management Integration",
+    "type": "module",
+    "bin": {
+        "dida365-mcp": "./build/index.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc --watch",
+        "dev": "npm run build && node build/index.js",
+        "start": "node build/index.js",
+        "debug": "npm run build && npx @modelcontextprotocol/inspector node build/index.js",
+        "serve-public": "npx http-server public -p 8080 -o",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "files": [
+        "build"
+    ],
+    "keywords": [
+        "mcp",
+        "dida365",
+        "ticktick",
+        "task-management"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.0.0",
+        "zod": "^3.23.0"
+    },
+    "devDependencies": {
+        "@modelcontextprotocol/inspector": "^0.17.2",
+        "@types/node": "^20.0.0",
+        "typescript": "^5.0.0"
+    }
+}
