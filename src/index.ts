@@ -2,7 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { loadOAuthConfig, printConfigInfo, validateOAuthConfig, type OAuth2Config } from "./config.js";
+import { loadOAuthConfig, printConfigInfo, validateOAuthConfig, isReadOnly, type OAuth2Config } from "./config.js";
 import { OAuthManager } from "./oauth.js";
 import { registerAllTools } from "./tools/index.js";
 
@@ -50,8 +50,13 @@ const server = new McpServer({
 // Tool Registration
 // ============================================================================
 
-// Register all tools with the server
-registerAllTools(server, { oauthManager });
+// Register all tools with the server (filter based on read-only mode)
+const readOnlyMode = isReadOnly();
+registerAllTools(server, { oauthManager }, readOnlyMode);
+
+if (readOnlyMode) {
+    console.error('⚠️  Read-Only Mode: Write/Delete tools are hidden');
+}
 
 // ============================================================================
 // Server Startup

@@ -144,6 +144,37 @@ Edit configuration file (`%APPDATA%\Claude\claude_desktop_config.json` on Window
 
 Most AI Agents that support the MCP protocol can integrate this server through similar configuration methods. Please refer to the respective Agent's documentation for specific configuration.
 
+### 🔒 Read-Only Mode (Security Feature)
+
+For AI agents that may run in YOLO mode (executing operations without user approval), you can enable read-only mode to prevent all write/delete operations:
+
+**Enable Read-Only Mode:**
+```json
+{
+  "mcpServers": {
+    "dida365": {
+      "command": "node",
+      "args": ["C:\\path\\to\\build\\index.js", "--readonly"],
+      "env": {
+        "DIDA365_CLIENT_ID": "your_client_id",
+        "DIDA365_CLIENT_SECRET": "your_client_secret"
+      }
+    }
+  }
+}
+```
+
+**Read-Only Mode Features:**
+- ✅ **Allowed Operations**: View projects, view tasks, check authorization status, revoke authorization (local only)
+- ❌ **Blocked Operations**: Create/update/delete projects, create/update/delete tasks, complete tasks
+- 🔒 **Safety**: AI agents can only read data, cannot modify or delete anything
+
+**When to Use:**
+- Using with autonomous AI agents (like AutoGPT, BabyAGI)
+- Testing or demonstration environments
+- When you want AI to analyze tasks without making changes
+- Sharing with others who should only view data
+
 ## 🔄 OAuth Authorization Flow
 
 1. **Request Authorization** - When authorization is needed, I'll call the `get_auth_url` tool

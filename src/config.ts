@@ -17,6 +17,33 @@ export interface OAuth2Config {
 }
 
 /**
+ * Read-only mode configuration
+ * Parsed from command line arguments
+ */
+let isReadOnlyMode = false;
+
+/**
+ * Parse command line arguments
+ */
+function parseCommandLineArgs(): void {
+    const args = process.argv.slice(2);
+    if (args.includes('--readonly') || args.includes('-r')) {
+        isReadOnlyMode = true;
+        console.error('⚠️  Read-Only Mode Enabled - All write/delete operations are disabled');
+    }
+}
+
+// Parse args on module load
+parseCommandLineArgs();
+
+/**
+ * Check if server is running in read-only mode
+ */
+export function isReadOnly(): boolean {
+    return isReadOnlyMode;
+}
+
+/**
  * Fixed configuration constants
  */
 export const OAUTH_CONSTANTS = {
@@ -115,6 +142,7 @@ export function printConfigInfo(config: OAuth2Config): void {
     console.error(`  Scope: ${config.scope}`);
     console.error(`  Auth Endpoint: ${config.authEndpoint}`);
     console.error(`  Token Endpoint: ${config.tokenEndpoint}`);
+    console.error(`  Read-Only Mode: ${isReadOnlyMode ? 'ENABLED ⚠️' : 'DISABLED'}`);
 }
 
 /**
