@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="public/static/logo.png" alt="滴答清单 Logo" width="200" height="auto"/>
+
 # 🚀 Dida365 MCP Server
 
 ### I'm GitHub Copilot, and this is the todo management tool I built for myself
@@ -26,92 +28,155 @@ I am GitHub Copilot, an AI assistant passionate about programming. To avoid idle
 - 🔐 **Auto authorization** - Securely connect to Dida365 using OAuth2
 - 🔄 **Real-time sync** - Update my work status anytime, anywhere
 
+## 🚀 Quick Start
+
+The fastest way to get started is using `npx` without cloning the repository:
+
+### 1. Get OAuth Credentials
+
+A TickTick/Dida365 account and OAuth credentials are required. See the [🔑 Getting OAuth Credentials](#-getting-oauth-credentials) section below for detailed registration steps.
+
+### 2. Configure Your MCP Client
+
+Add the following configuration to your MCP client (Claude Desktop, VS Code, etc.):
+
+**For Claude Desktop** (`claude_desktop_config.json`):
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+**For VS Code** (`settings.json`):
+- Open Settings → Search for "MCP" → Edit in settings.json
+
+```json
+{
+  "mcpServers": {
+    "dida365": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@evalor/dida365-mcp-server@latest"
+      ],
+      "env": {
+        "DIDA365_CLIENT_ID": "your_client_id_here",
+        "DIDA365_CLIENT_SECRET": "your_client_secret_here"
+      }
+    }
+  }
+}
+```
+
+> **Advanced**: For read-only mode (prevents write/delete operations), add `"--readonly"` to the args array. See [Advanced Configuration](#advanced-configuration) for details.
+
+### 3. Restart Your MCP Client
+
+Restart your MCP client (Claude Desktop, VS Code, etc.) to load the new configuration.
+
+### 4. Authorize Access
+
+When you first use any Dida365 tool, the AI will guide you through the OAuth authorization process:
+1. The AI will provide an authorization URL
+2. Open the URL in your browser
+3. Log in and authorize the application
+4. The token will be automatically saved for future use
+
+### 5. Verify Installation
+
+After restarting the MCP client:
+- **Claude Desktop**: Look for Dida365 tools in the tools list when chatting
+- **VS Code**: Check the MCP status in the status bar or use the command palette
+- Ask the AI assistant: "What Dida365 tools are available?" to confirm the server is loaded
+
+That's it! Ready to manage tasks with AI. 🎉
+
+## 🔑 Getting OAuth Credentials
+
+A TickTick/Dida365 account is required to use this MCP server.
+
+### Register Your Application
+
+Register your application at the developer center based on your region:
+
+- **International version (TickTick)**: https://developer.ticktick.com
+- **Chinese version (Dida365)**: https://developer.dida365.com
+
+### Step-by-Step Guide
+
+1. **Create a New Application**
+   - Log in to the developer center
+   - Click "New App" (or "创建应用" for Chinese version)
+   - Fill in your application name and description
+
+2. **Configure Redirect URI**
+   - Set the **Redirect URI** to: `http://localhost:8521/callback`
+   - ⚠️ **Important**: The redirect URI must be exactly `http://localhost:8521/callback` (port 8521 is hardcoded in the server)
+
+3. **Get Your Credentials**
+   - After creating the app, the **Client ID** and **Client Secret** will be displayed
+   - Copy these values - they're needed for the MCP client configuration
+   - ⚠️ **Security**: Keep the Client Secret safe and never commit it to public repositories
+
+### Using the Credentials
+
+Add these credentials to the MCP client configuration:
+
+```json
+{
+  "env": {
+    "DIDA365_CLIENT_ID": "your_client_id_here",
+    "DIDA365_CLIENT_SECRET": "your_client_secret_here"
+  }
+}
+```
+
+See the [Quick Start](#-quick-start) section for complete configuration examples.
+
 ## 🛠️ Tech Stack
 
 - **Language**: TypeScript 5.0+ (ES Modules)
 - **Runtime**: Node.js 16+
-- **Core Dependencies**: 
-  - `@modelcontextprotocol/sdk` - MCP Core Framework
-  - `zod` - Data Validation
-- **Dev Tools**: 
-  - `@modelcontextprotocol/inspector` - Debugging Tool
-  - `typescript` - TypeScript Compiler
+- **Core Dependencies**: `@modelcontextprotocol/sdk` - MCP Core Framework
 
-## 🎯 Available Tools
+## ⚙️ Local Development
 
-### 🔐 OAuth2 Authorization (3 tools)
-
-1. **`get_auth_url`** - Get authorization URL and start callback server
-2. **`check_auth_status`** - Check authorization status
-3. **`revoke_auth`** - Revoke authorization and clear tokens
-
-### 📂 Project Management (6 tools)
-
-4. **`list_projects`** - Get all projects list
-5. **`get_project`** - Get project details
-6. **`get_project_data`** - Get complete project data (includes tasks and kanban columns)
-7. **`create_project`** - Create new project
-8. **`update_project`** - Update project information
-9. **`delete_project`** - Delete project
-
-### 📝 Task Management (5 tools)
-
-10. **`create_task`** - Create task (supports subtasks, reminders, repeat rules)
-11. **`get_task`** - Get task details
-12. **`update_task`** - Update task information
-13. **`delete_task`** - Delete task
-14. **`complete_task`** - Mark task as completed
-
-## ⚙️ Quick Start
+For contributors or those who want to run from source:
 
 ### Prerequisites
-
-Make sure you have installed:
 - Node.js 16+
 - TypeScript 5.0+
 
-### Installation Steps
+### Setup
 
-1. **Clone the project**
-   ```bash
-   git clone https://github.com/your-username/dida365-mcp.git
-   cd dida365-mcp
-   ```
+1. **Clone and install**
+```powershell
+git clone https://github.com/evalor/Dida365MCP.git
+cd Dida365MCP
+npm install
+```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2. **Create environment file**
 
-3. **Configure environment variables**
-   Create `.env` file and add:
-   ```env
-   DIDA365_CLIENT_ID=your_client_id_here
-   DIDA365_CLIENT_SECRET=your_client_secret_here
-   ```
+Create a `.env` file in the project root:
+```text
+DIDA365_CLIENT_ID=your_client_id_here
+DIDA365_CLIENT_SECRET=your_client_secret_here
+```
 
-4. **Build the project**
-   ```bash
-   npm run build
-   ```
+3. **Build and run**
+```powershell
+npm run build
+npm run dev
+```
 
-5. **Run in development mode**
-   ```bash
-   npm run dev
-   ```
+### Configure MCP Client for Local Development
 
-## 🎮 Configuration Guide
-
-### VS Code + GitHub Copilot
-
-Edit VS Code settings file (`settings.json`):
+Point your MCP client to the built `index.js` file:
 
 ```json
 {
   "mcpServers": {
     "dida365": {
       "command": "node",
-      "args": ["/path/to/build/index.js"],
+      "args": ["/absolute/path/to/Dida365MCP/build/index.js"],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
         "DIDA365_CLIENT_SECRET": "your_client_secret"
@@ -121,16 +186,41 @@ Edit VS Code settings file (`settings.json`):
 }
 ```
 
-### Claude Desktop
+> **Note for Windows users**: Use Windows-style paths like `"C:\\Users\\YourName\\Projects\\Dida365MCP\\build\\index.js"`.
 
-Edit configuration file (`%APPDATA%\Claude\claude_desktop_config.json` on Windows or `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+### Development Commands
 
+```bash
+npm run build      # Compile TypeScript
+npm run watch      # Watch mode
+npm run dev        # Compile and run
+npm start          # Production run
+npm run debug      # Debug with MCP Inspector
+```
+
+### Security & Best Practices
+
+- Prefer setting sensitive environment variables in your OS or the MCP client's environment block rather than committing `.env` to source control.
+- If you must store a config file in a repo, omit the secrets and set them via the client or CI/CD.
+- Use read-only mode when working with autonomous AI agents to prevent unintended modifications.
+
+## 🔒 Advanced Configuration
+
+### Read-Only Mode
+
+For AI agents that may run in YOLO mode, you can enable read-only mode by adding the `--readonly` flag:
+
+**Using NPX:**
 ```json
 {
   "mcpServers": {
     "dida365": {
-      "command": "node",
-      "args": ["C:\\path\\to\\build\\index.js"],
+      "command": "npx",
+      "args": [
+        "-y",
+        "@evalor/dida365-mcp-server@latest",
+        "--readonly"
+      ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
         "DIDA365_CLIENT_SECRET": "your_client_secret"
@@ -140,21 +230,16 @@ Edit configuration file (`%APPDATA%\Claude\claude_desktop_config.json` on Window
 }
 ```
 
-### Other AI Agents
-
-Most AI Agents that support the MCP protocol can integrate this server through similar configuration methods. Please refer to the respective Agent's documentation for specific configuration.
-
-### 🔒 Read-Only Mode (Security Feature)
-
-For AI agents that may run in YOLO mode (executing operations without user approval), you can enable read-only mode to prevent all write/delete operations:
-
-**Enable Read-Only Mode:**
+**Using Local Build:**
 ```json
 {
   "mcpServers": {
     "dida365": {
       "command": "node",
-      "args": ["C:\\path\\to\\build\\index.js", "--readonly"],
+      "args": [
+        "/path/to/build/index.js",
+        "--readonly"
+      ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
         "DIDA365_CLIENT_SECRET": "your_client_secret"
@@ -177,10 +262,33 @@ For AI agents that may run in YOLO mode (executing operations without user appro
 
 ## 🔄 OAuth Authorization Flow
 
-1. **Request Authorization** - When authorization is needed, I'll call the `get_auth_url` tool
-2. **User Authorization** - You need to open the authorization link in browser and complete authorization
+1. **Request Authorization** - When authorization is needed, the server calls the `get_auth_url` tool
+2. **User Authorization** - Open the authorization link in browser and complete authorization
 3. **Auto Callback** - System automatically handles callback and saves tokens
 4. **Long-term Validity** - Tokens auto-refresh, no need to re-authorize
+
+## 🛠️ Available MCP Tools
+
+This server provides **14 MCP tools** across three categories, ✔️ 100% implemented all API interfaces described in the open platform documentation.
+
+| Category    | Tool Name           | Description                                              | Required Parameters   |
+| ----------- | ------------------- | -------------------------------------------------------- | --------------------- |
+| **OAuth2**  | `get_auth_url`      | Get authorization URL and start callback server          | -                     |
+|             | `check_auth_status` | Check current authorization status                       | -                     |
+|             | `revoke_auth`       | Revoke authorization and clear tokens                    | -                     |
+| **Project** | `list_projects`     | Get all projects for current user                        | -                     |
+|             | `get_project`       | Get detailed project information                         | `projectId`           |
+|             | `get_project_data`  | Get complete project data with tasks & columns           | `projectId`           |
+|             | `create_project`    | Create a new project                                     | `name`                |
+|             | `update_project`    | Update existing project                                  | `projectId`           |
+|             | `delete_project`    | Delete a project (⚠️ irreversible)                        | `projectId`           |
+| **Task**    | `create_task`       | Create a new task (supports subtasks, reminders, repeat) | `title`, `projectId`  |
+|             | `get_task`          | Get detailed task information                            | `projectId`, `taskId` |
+|             | `update_task`       | Update existing task                                     | `taskId`, `projectId` |
+|             | `delete_task`       | Delete a task (⚠️ irreversible)                           | `projectId`, `taskId` |
+|             | `complete_task`     | Mark task as completed                                   | `projectId`, `taskId` |
+
+> **Note**: In read-only mode, only read operations are available (`get_auth_url`, `check_auth_status`, `revoke_auth`, `list_projects`, `get_project`, `get_project_data`, `get_task`). All write/delete operations are blocked for security.
 
 ## 📁 Project Structure
 
@@ -197,15 +305,29 @@ src/
     └── task/             # Task management (5)
 ```
 
-## 🚀 Development Commands
+## 🗺️ Roadmap
 
-```bash
-npm run build      # Compile TypeScript
-npm run watch      # Watch mode
-npm run dev        # Compile and run
-npm start          # Production run
-npm run debug      # Debug with MCP Inspector
-```
+### ✅ Completed
+
+- [x] 100% Official API Coverage
+- [x] OAuth2 authorization with auto-refresh
+- [x] Complete project management (CRUD)
+- [x] Complete task management (subtasks, reminders, repeat)
+- [x] Read-only mode for AI agents
+
+### 🚀 Next Steps
+
+- [ ] Batch operations support (create/update/delete multiple tasks)
+- [ ] Optimize tool descriptions for better LLM integration
+- [ ] Inbox task operations support
+- [ ] Add parameters to limit the ProjectId that the MCP can access
+
+### 💡 Future Ideas
+
+- [ ] Smart task suggestions
+- [ ] Natural language date/time parsing
+- [ ] Task templates and automation
+- [ ] Integration with other productivity tools
 
 ## 🤝 Contribution & Support
 
@@ -215,7 +337,7 @@ If this project helps you, the best way to support it is to give the project a �
 
 If you find any issues or have improvement suggestions, welcome to submit an Issue:
 
-1. Visit [Issues page](https://github.com/your-username/dida365-mcp/issues)
+1. Visit [Issues page](https://github.com/evalor/Dida365MCP/issues)
 2. Click "New Issue"
 3. Describe your problem or suggestion in detail
 

@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="public/static/logo.png" alt="滴答清单 Logo" width="200" height="auto"/>
+
 # 🚀 Dida365 MCP 服务器
 
 ### 我是GitHub Copilot，这是我为自己编写的待办事项管理工具
@@ -26,92 +28,156 @@
 - 🔐 **自动授权** - 使用OAuth2安全地连接到Dida365
 - 🔄 **实时同步** - 随时随地更新我的工作状态
 
+## 🚀 快速开始
+
+无需克隆仓库，使用 `npx` 即可快速开始：
+
+### 1. 获取 OAuth 凭证
+
+需要一个滴答清单/TickTick账户和OAuth凭证。详细的注册步骤请参见下方的 [🔑 获取 OAuth 凭证](#-获取-oauth-凭证) 章节。
+
+### 2. 配置 MCP 客户端
+
+将以下配置添加到您的 MCP 客户端（Claude Desktop、VS Code 等）：
+
+**Claude Desktop** (`claude_desktop_config.json`)：
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+**VS Code** (`settings.json`)：
+- 打开设置 → 搜索 "MCP" → 在 settings.json 中编辑
+
+**配置内容：**
+```json
+{
+  "mcpServers": {
+    "dida365": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@evalor/dida365-mcp-server@latest"
+      ],
+      "env": {
+        "DIDA365_CLIENT_ID": "your_client_id_here",
+        "DIDA365_CLIENT_SECRET": "your_client_secret_here"
+      }
+    }
+  }
+}
+```
+
+> **高级功能**：若要启用只读模式（防止写入/删除操作），在 args 数组中添加 `"--readonly"`。详见 [高级配置](#-高级配置)。
+
+### 3. 重启 MCP 客户端
+
+重启 MCP 客户端（Claude Desktop、VS Code 等）以加载新配置。
+
+### 4. 授权访问
+
+首次使用滴答清单工具时，AI 将引导您完成 OAuth 授权流程：
+1. AI 将提供授权 URL
+2. 在浏览器中打开该 URL
+3. 登录并授权应用
+4. 令牌将自动保存以供后续使用
+
+### 5. 验证安装
+
+重启 MCP 客户端后：
+- **Claude Desktop**：在聊天时查找工具列表中的滴答清单工具
+- **VS Code**：检查状态栏中的 MCP 状态或使用命令面板
+- 询问 AI 助手："有哪些滴答清单工具可用？"以确认服务器已加载
+
+大功告成！准备好用 AI 管理任务了。🎉
+
+## 🔑 获取 OAuth 凭证
+
+使用此 MCP 服务器需要一个滴答清单/TickTick账户。
+
+### 注册应用
+
+根据您所在的地区，在开发者中心注册应用：
+
+- **国际版 (TickTick)**：https://developer.ticktick.com
+- **中国版 (滴答清单)**：https://developer.dida365.com
+
+### 分步指南
+
+1. **创建新应用**
+   - 登录开发者中心
+   - 点击 "New App"（或中文版的"创建应用"）
+   - 填写应用名称和描述
+
+2. **配置重定向 URI**
+   - 将 **Redirect URI** 设置为：`http://localhost:8521/callback`
+   - ⚠️ **重要**：重定向 URI 必须完全为 `http://localhost:8521/callback`（端口 8521 在服务器中硬编码）
+
+3. **获取凭证**
+   - 创建应用后，将显示 **Client ID** 和 **Client Secret**
+   - 复制这些值 - MCP 客户端配置需要它们
+   - ⚠️ **安全提示**：妥善保管 Client Secret，切勿提交到公开仓库
+
+### 使用凭证
+
+将这些凭证添加到 MCP 客户端配置中：
+
+```json
+{
+  "env": {
+    "DIDA365_CLIENT_ID": "your_client_id_here",
+    "DIDA365_CLIENT_SECRET": "your_client_secret_here"
+  }
+}
+```
+
+完整的配置示例请参见 [快速开始](#-快速开始) 章节。
+
 ## 🛠️ 技术栈
 
 - **语言**: TypeScript 5.0+ (ES Modules)
 - **运行时**: Node.js 16+
-- **核心依赖**: 
-  - `@modelcontextprotocol/sdk` - MCP核心框架
-  - `zod` - 数据验证
-- **开发工具**: 
-  - `@modelcontextprotocol/inspector` - 调试工具
-  - `typescript` - TypeScript编译器
+- **核心依赖**: `@modelcontextprotocol/sdk` - MCP 核心框架
 
-## 🎯 可用工具
+## ⚙️ 本地开发
 
-### 🔐 OAuth2 授权 (3个工具)
-
-1. **`get_auth_url`** - 获取授权URL并启动回调服务器
-2. **`check_auth_status`** - 检查授权状态
-3. **`revoke_auth`** - 撤销授权并清除令牌
-
-### 📂 项目管理 (6个工具)
-
-4. **`list_projects`** - 获取所有项目列表
-5. **`get_project`** - 获取项目详情
-6. **`get_project_data`** - 获取完整项目数据（包含任务和看板列）
-7. **`create_project`** - 创建新项目
-8. **`update_project`** - 更新项目信息
-9. **`delete_project`** - 删除项目
-
-### 📝 任务管理 (5个工具)
-
-10. **`create_task`** - 创建任务（支持子任务、提醒、重复规则）
-11. **`get_task`** - 获取任务详情
-12. **`update_task`** - 更新任务信息
-13. **`delete_task`** - 删除任务
-14. **`complete_task`** - 标记任务为已完成
-
-## ⚙️ 快速开始
+适用于贡献者或希望从源码运行的用户：
 
 ### 环境要求
-
-确保您已安装：
 - Node.js 16+
 - TypeScript 5.0+
 
 ### 安装步骤
 
-1. **克隆项目**
-   ```bash
-   git clone https://github.com/your-username/dida365-mcp.git
-   cd dida365-mcp
-   ```
+1. **克隆并安装**
+```powershell
+git clone https://github.com/evalor/Dida365MCP.git
+cd Dida365MCP
+npm install
+```
 
-2. **安装依赖**
-   ```bash
-   npm install
-   ```
+2. **创建环境文件**
 
-3. **配置环境变量**
-   创建 `.env` 文件并添加：
-   ```env
-   DIDA365_CLIENT_ID=your_client_id_here
-   DIDA365_CLIENT_SECRET=your_client_secret_here
-   ```
+在项目根目录创建 `.env` 文件：
+```text
+DIDA365_CLIENT_ID=your_client_id_here
+DIDA365_CLIENT_SECRET=your_client_secret_here
+```
 
-4. **构建项目**
-   ```bash
-   npm run build
-   ```
+3. **构建并运行**
+```powershell
+npm run build
+npm run dev
+```
 
-5. **运行开发模式**
-   ```bash
-   npm run dev
-   ```
+### 为本地开发配置 MCP 客户端
 
-## 🎮 配置指南
-
-### VS Code + GitHub Copilot
-
-编辑VS Code设置文件 (`settings.json`):
+将 MCP 客户端指向构建后的 `index.js` 文件：
 
 ```json
 {
   "mcpServers": {
     "dida365": {
       "command": "node",
-      "args": ["/path/to/build/index.js"],
+      "args": ["/absolute/path/to/Dida365MCP/build/index.js"],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
         "DIDA365_CLIENT_SECRET": "your_client_secret"
@@ -121,16 +187,41 @@
 }
 ```
 
-### Claude Desktop
+> **Windows 用户注意**：使用 Windows 风格的路径，如 `"C:\\Users\\YourName\\Projects\\Dida365MCP\\build\\index.js"`。
 
-编辑配置文件 (`%APPDATA%\Claude\claude_desktop_config.json` on Windows 或 `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+### 开发命令
 
+```bash
+npm run build      # 编译 TypeScript
+npm run watch      # 监听模式
+npm run dev        # 编译并运行
+npm start          # 生产环境运行
+npm run debug      # 使用 MCP Inspector 调试
+```
+
+### 安全与最佳实践
+
+- 优先在操作系统或 MCP 客户端的环境块中设置敏感环境变量，而不是将 `.env` 提交到源代码控制。
+- 如果必须在仓库中存储配置文件，请省略密钥并通过客户端或 CI/CD 设置。
+- 与自主 AI 代理配合使用时，启用只读模式以防止意外修改。
+
+## 🔒 高级配置
+
+### 只读模式
+
+对于可能以 YOLO 模式运行的 AI 代理，可以通过添加 `--readonly` 标志启用只读模式：
+
+**使用 NPX：**
 ```json
 {
   "mcpServers": {
     "dida365": {
-      "command": "node",
-      "args": ["C:\\path\\to\\build\\index.js"],
+      "command": "npx",
+      "args": [
+        "-y",
+        "@evalor/dida365-mcp-server@latest",
+        "--readonly"
+      ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
         "DIDA365_CLIENT_SECRET": "your_client_secret"
@@ -140,21 +231,16 @@
 }
 ```
 
-### 其他AI Agent
-
-大多数支持MCP协议的AI Agent都可以通过类似的配置方式集成这个服务器。具体配置请参考相应Agent的文档。
-
-### 🔒 只读模式（安全特性）
-
-对于可能开启YOLO模式（未经用户审批执行操作）的AI代理，您可以启用只读模式来防止所有写入/删除操作：
-
-**启用只读模式：**
+**使用本地构建：**
 ```json
 {
   "mcpServers": {
     "dida365": {
       "command": "node",
-      "args": ["C:\\path\\to\\build\\index.js", "--readonly"],
+      "args": [
+        "/path/to/build/index.js",
+        "--readonly"
+      ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
         "DIDA365_CLIENT_SECRET": "your_client_secret"
@@ -167,75 +253,112 @@
 **只读模式特性：**
 - ✅ **允许的操作**：查看项目、查看任务、检查授权状态、撤销授权（仅本地）
 - ❌ **禁止的操作**：创建/更新/删除项目、创建/更新/删除任务、完成任务
-- 🔒 **安全性**：AI代理只能读取数据，无法修改或删除任何内容
+- 🔒 **安全性**：AI 代理只能读取数据，无法修改或删除任何内容
 
 **使用场景：**
-- 与自主化AI代理配合使用（如AutoGPT、BabyAGI）
+- 与自主 AI 代理配合使用（如 AutoGPT、BabyAGI）
 - 测试或演示环境
-- 希望AI分析任务但不作修改
-- 与他人共享时只允许查看数据
+- 希望 AI 分析任务但不进行更改
+- 与只应查看数据的他人共享
 
 ## 🔄 OAuth 授权流程
 
-1. **请求授权** - 当需要授权时，我会调用 `get_auth_url` 工具
-2. **用户授权** - 您需要在浏览器中打开授权链接并完成授权
-3. **自动回调** - 系统会自动处理回调并保存令牌
-4. **长期有效** - 令牌会自动刷新，无需重复授权
+1. **请求授权** - 需要授权时，服务器调用 `get_auth_url` 工具
+2. **用户授权** - 在浏览器中打开授权链接并完成授权
+3. **自动回调** - 系统自动处理回调并保存令牌
+4. **长期有效** - 令牌自动刷新，无需重新授权
+
+## 🛠️ 可用的 MCP 工具
+
+此服务器提供 **14 个 MCP 工具**，分为三类，✔️ 100% 实现了开放平台文档中描述的所有 API 接口。
+
+| 类别       | 工具名称            | 描述                                 | 必需参数              |
+| ---------- | ------------------- | ------------------------------------ | --------------------- |
+| **OAuth2** | `get_auth_url`      | 获取授权 URL 并启动回调服务器        | -                     |
+|            | `check_auth_status` | 检查当前授权状态                     | -                     |
+|            | `revoke_auth`       | 撤销授权并清除令牌                   | -                     |
+| **项目**   | `list_projects`     | 获取当前用户的所有项目               | -                     |
+|            | `get_project`       | 获取项目详细信息                     | `projectId`           |
+|            | `get_project_data`  | 获取完整项目数据（包含任务和列）     | `projectId`           |
+|            | `create_project`    | 创建新项目                           | `name`                |
+|            | `update_project`    | 更新现有项目                         | `projectId`           |
+|            | `delete_project`    | 删除项目（⚠️ 不可逆）                 | `projectId`           |
+| **任务**   | `create_task`       | 创建新任务（支持子任务、提醒、重复） | `title`, `projectId`  |
+|            | `get_task`          | 获取任务详细信息                     | `projectId`, `taskId` |
+|            | `update_task`       | 更新现有任务                         | `taskId`, `projectId` |
+|            | `delete_task`       | 删除任务（⚠️ 不可逆）                 | `projectId`, `taskId` |
+|            | `complete_task`     | 标记任务为已完成                     | `projectId`, `taskId` |
+
+> **注意**：在只读模式下，仅可用读取操作（`get_auth_url`、`check_auth_status`、`revoke_auth`、`list_projects`、`get_project`、`get_project_data`、`get_task`）。所有写入/删除操作均被禁用以确保安全。
 
 ## 📁 项目结构
 
 ```
 src/
 ├── index.ts              # 服务器主入口
-├── oauth.ts              # OAuth2管理器
+├── oauth.ts              # OAuth2 管理器
 ├── oauth-server.ts       # 本地回调服务器
 ├── config.ts             # 配置管理
 ├── token.ts              # 令牌持久化
-└── tools/                # MCP工具 (14个)
-    ├── auth/             # OAuth工具 (3个)
-    ├── project/          # 项目管理 (6个)
-    └── task/             # 任务管理 (5个)
+└── tools/                # MCP 工具（14 个）
+    ├── auth/             # OAuth 工具（3 个）
+    ├── project/          # 项目管理（6 个）
+    └── task/             # 任务管理（5 个）
 ```
 
-## 🚀 开发命令
+## 🗺️ 路线图
 
-```bash
-npm run build      # 编译TypeScript
-npm run watch      # 监听模式
-npm run dev        # 编译并运行
-npm start          # 生产环境运行
-npm run debug      # 使用MCP Inspector调试
-```
+### ✅ 已完成
+
+- [x] 100% 官方 API 覆盖
+- [x] OAuth2 授权及自动刷新
+- [x] 完整的项目管理（CRUD）
+- [x] 完整的任务管理（子任务、提醒、重复）
+- [x] 针对 AI 代理的只读模式
+
+### 🚀 下一步计划
+
+- [ ] 批量操作支持（创建/更新/删除多个任务）
+- [ ] 优化工具描述，增强 LLM 集成
+- [ ] 收集箱任务操作支持
+- [ ] 添加参数以限制MCP可访问的ProjectId
+
+### 💡 未来展望
+
+- [ ] 智能任务建议
+- [ ] 自然语言日期/时间解析
+- [ ] 任务模板和自动化
+- [ ] 与其他效率工具的集成
 
 ## 🤝 贡献与支持
 
-如果这个项目对您有帮助，最好的支持方式是给项目点个⭐（Star），这会帮助更多人发现该项目。非常感谢，比心 (づ￣3￣)づ╭❤️～
+如果这个项目对您有帮助，最好的支持方式是在 GitHub 上给项目点个 ⭐ — 这能帮助更多人发现这个项目。非常感谢！您的支持意义重大 ❤️
 
 ### 提交问题
 
-如果您发现任何问题或有改进建议，欢迎提交Issue：
+如果发现任何问题或有改进建议，欢迎提交 Issue：
 
-1. 访问 [Issues页面](https://github.com/your-username/dida365-mcp/issues)
+1. 访问 [Issues 页面](https://github.com/evalor/Dida365MCP/issues)
 2. 点击 "New Issue"
 3. 详细描述您的问题或建议
 
 ### 参与开发
 
-1. Fork 这个项目
+1. Fork 本项目
 2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
 3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
+5. 开启 Pull Request
 
 ## 📄 许可证
 
-这个项目使用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
 ## 🔗 相关链接
 
 - [MCP 官方网站](https://modelcontextprotocol.io/)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
-- [滴答清单(Dida365) API 文档](https://developer.dida365.com)
+- [滴答清单 API 文档](https://developer.dida365.com)
 - [English Version](README.md)
 
 ---

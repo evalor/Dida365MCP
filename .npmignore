@@ -1,0 +1,30 @@
+# Source files
+node_modules/
+src/
+*.ts
+!*.d.ts
+
+# Development files
+.env
+.env.example
+*.log
+.DS_Store
+.nyc_output
+coverage/
+
+# Git and CI/CD
+.git/
+.github/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js

@@ -41,12 +41,12 @@ export class OAuthCallbackServer {
             this.resolveCallback = resolve;
             this.rejectCallback = reject;
 
-            // 创建 HTTP 服务器
+            // Create HTTP server
             this.server = http.createServer(async (req, res) => {
                 await this.handleRequest(req, res);
             });
 
-            // 监听端口
+            // Listen on port
             const host = OAUTH_CONSTANTS.CALLBACK_HOST;
             const port = OAUTH_CONSTANTS.CALLBACK_PORT;
 
@@ -54,13 +54,13 @@ export class OAuthCallbackServer {
                 console.error(`OAuth callback server listening on http://${host}:${port}`);
             });
 
-            // 设置超时
+            // Set timeout
             this.timeoutHandle = setTimeout(() => {
                 this.close();
                 reject(new Error('Authorization timeout (5 minutes)'));
             }, timeoutMs);
 
-            // 错误处理
+            // Error handling
             this.server.on('error', (error: NodeJS.ErrnoException) => {
                 if (error.code === 'EADDRINUSE') {
                     reject(new Error(`Port ${port} is already in use. Please close other applications using this port.`));
@@ -78,13 +78,13 @@ export class OAuthCallbackServer {
     private async handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
         const url = new URL(req.url || '', `http://${req.headers.host}`);
 
-        // 处理静态文件
+        // Serve static files
         if (url.pathname.startsWith('/static/')) {
             await this.serveStatic(req, res, url.pathname);
             return;
         }
 
-        // 只处理回调路径
+        // Only handle callback path
         if (url.pathname !== '/callback') {
             this.send404(res);
             return;
@@ -95,7 +95,7 @@ export class OAuthCallbackServer {
         const error = url.searchParams.get('error');
         const errorDescription = url.searchParams.get('error_description');
 
-        // 检查是否有错误
+        // Check for errors
         if (error) {
             const errorMsg = errorDescription || error;
             this.sendErrorPage(res, `Authorization failed: ${errorMsg}`);
@@ -108,7 +108,7 @@ export class OAuthCallbackServer {
             return;
         }
 
-        // 验证必需参数
+        // Validate required parameters
         if (!code || !returnedState) {
             this.sendErrorPage(res, 'Missing required parameters (code or state)');
 
@@ -120,7 +120,7 @@ export class OAuthCallbackServer {
             return;
         }
 
-        // 验证 state（防 CSRF 攻击）
+        // Validate state (CSRF protection)
         if (returnedState !== this.pendingState) {
             this.sendErrorPage(res, 'Invalid state parameter (CSRF protection)');
 
@@ -132,14 +132,14 @@ export class OAuthCallbackServer {
             return;
         }
 
-        // 成功获取授权码
+        // Successfully obtained authorization code
         this.sendSuccessPage(res);
 
         if (this.resolveCallback) {
             this.resolveCallback({ code, state: returnedState });
         }
 
-        // 延迟关闭服务器，让用户看到成功页面
+        // Delay server close to let user see success page
         setTimeout(() => {
             this.close();
         }, 2000);
