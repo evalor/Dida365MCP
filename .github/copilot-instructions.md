@@ -4,13 +4,15 @@
 
 A TypeScript-based MCP server for Dida365 (TickTick) integration, implementing complete OAuth2 authorization and task management functionality using the MCP SDK.
 
-**Current Status**: ✅ Fully Ready (OAuth2 Authorization + Project Management + Task Management)
+**Package Name**: `dida365-mcp-server` (published on npm)
+**Current Status**: ✅ Production Ready (OAuth2 Authorization + Project Management + Task Management + Read-Only Mode)
 
 ## Tech Stack
 
 - **Language**: TypeScript 5.0+ (ES Modules)
 - **Project Language**: English for code and documentation. Assistant can communicate with users in their primary language.
 - **Runtime**: Node.js 16+
+- **Package Version**: 0.1.0
 - **Dependencies**:
   - `@modelcontextprotocol/sdk`: ^1.0.0 (MCP Core)
   - `zod`: ^3.23.0 (Data Validation)
@@ -26,18 +28,36 @@ src/
 ├── index.ts              # Main server entry
 ├── oauth.ts              # OAuth2 manager
 ├── oauth-server.ts       # Local callback server (port 8521)
-├── config.ts             # Configuration management (env vars)
+├── config.ts             # Configuration management (env vars + CLI args)
 ├── token.ts              # Token persistence (~/.dida365-mcp/)
 ├── auth-state.ts         # Authorization state definition
 └── tools/                # MCP tools (14 total)
+    ├── index.ts          # Tool registration with read-only mode support
+    ├── types.ts          # Shared type definitions
     ├── auth/             # OAuth tools (3)
+    │   ├── get-auth-url.ts
+    │   ├── check-auth-status.ts
+    │   └── revoke-auth.ts
     ├── project/          # Project management (6)
+    │   ├── list-projects.ts
+    │   ├── get-project.ts
+    │   ├── get-project-data.ts
+    │   ├── create-project.ts
+    │   ├── update-project.ts
+    │   └── delete-project.ts
     └── task/             # Task management (5)
+        ├── create-task.ts
+        ├── get-task.ts
+        ├── update-task.ts
+        ├── delete-task.ts
+        └── complete-task.ts
 
 public/                   # OAuth callback pages
-├── success.html
-├── error.html
-└── 404.html
+├── success.html          # Success page after OAuth
+├── error.html            # Error page for OAuth failures
+├── 404.html              # 404 page for invalid routes
+└── static/
+    └── logo.png          # Project logo
 
 build/                    # Compiled output (tsc)
 ```
@@ -95,11 +115,54 @@ npm run debug      # Debug with MCP Inspector
 
 ## Integration Configuration
 
+### Quick Start with NPX (Recommended)
+
+The fastest way to use this server is via `npx` without cloning the repository:
+
+**Normal Mode (Read & Write):**
+```json
+{
+  "mcpServers": {
+    "dida365": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "dida365-mcp-server@latest"
+      ],
+      "env": {
+        "DIDA365_CLIENT_ID": "your_client_id",
+        "DIDA365_CLIENT_SECRET": "your_client_secret"
+      }
+    }
+  }
+}
+```
+
+**Read-Only Mode (Security Feature):**
+```json
+{
+  "mcpServers": {
+    "dida365": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "dida365-mcp-server@latest",
+        "--readonly"
+      ],
+      "env": {
+        "DIDA365_CLIENT_ID": "your_client_id",
+        "DIDA365_CLIENT_SECRET": "your_client_secret"
+      }
+    }
+  }
+}
+```
+
 ### Claude Desktop Integration
 
 Edit configuration file: `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 
-**Normal Mode (Read & Write):**
+**Using Local Build (for development):**
 ```json
 {
   "mcpServers": {
@@ -115,13 +178,20 @@ Edit configuration file: `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
 }
 ```
 
-**Read-Only Mode (Security Feature):**
+### VS Code + GitHub Copilot Integration
+
+Edit VS Code settings file (`settings.json`):
+
+**Using NPX (Recommended):**
 ```json
 {
   "mcpServers": {
     "dida365": {
-      "command": "node",
-      "args": ["C:\\path\\to\\build\\index.js", "--readonly"],
+      "command": "npx",
+      "args": [
+        "-y",
+        "dida365-mcp-server@latest"
+      ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
         "DIDA365_CLIENT_SECRET": "your_client_secret"
@@ -131,33 +201,13 @@ Edit configuration file: `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
 }
 ```
 
-### VS Code + GitHub Copilot Integration
-
-Edit VS Code settings file (`settings.json`):
-
-**Normal Mode:**
+**Using Local Build (for development):**
 ```json
 {
   "mcpServers": {
     "dida365": {
       "command": "node",
       "args": ["/path/to/build/index.js"],
-      "env": {
-        "DIDA365_CLIENT_ID": "your_client_id",
-        "DIDA365_CLIENT_SECRET": "your_client_secret"
-      }
-    }
-  }
-}
-```
-
-**Read-Only Mode:**
-```json
-{
-  "mcpServers": {
-    "dida365": {
-      "command": "node",
-      "args": ["/path/to/build/index.js", "--readonly"],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
         "DIDA365_CLIENT_SECRET": "your_client_secret"
@@ -207,7 +257,7 @@ Add the `--readonly` or `-r` flag to the command line arguments:
 
 ### Behavior
 
-**Allowed Operations (6 tools):**
+**Allowed Operations (7 tools):**
 - ✅ `get_auth_url` - Get authorization URL (read-only, local operation)
 - ✅ `check_auth_status` - Check authorization status (read-only)
 - ✅ `revoke_auth` - Revoke authorization (local token cleanup only, safe)
@@ -216,7 +266,7 @@ Add the `--readonly` or `-r` flag to the command line arguments:
 - ✅ `get_project_data` - Get complete project data (read-only)
 - ✅ `get_task` - Get task details (read-only)
 
-**Blocked Operations (8 tools - not registered):**
+**Blocked Operations (7 tools - not registered):**
 - ❌ `create_project` - Create project (write operation)
 - ❌ `update_project` - Update project (write operation)
 - ❌ `delete_project` - Delete project (delete operation)

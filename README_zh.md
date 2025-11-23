@@ -55,7 +55,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@evalor/dida365-mcp-server@latest"
+        "dida365-mcp-server@latest"
       ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id_here",
@@ -219,7 +219,7 @@ npm run debug      # 使用 MCP Inspector 调试
       "command": "npx",
       "args": [
         "-y",
-        "@evalor/dida365-mcp-server@latest",
+        "dida365-mcp-server@latest",
         "--readonly"
       ],
       "env": {
@@ -345,9 +345,9 @@ src/
 ### 参与开发
 
 1. Fork 本项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
+2. 创建功能分支 (`git checkout -b feature/new-feature`)
+3. 提交更改 (`git commit -m 'feat: implement new feature'`)
+4. 推送到分支 (`git push origin feature/new-feature`)
 5. 开启 Pull Request
 
 ## 📄 许可证

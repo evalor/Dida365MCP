@@ -54,7 +54,7 @@ Add the following configuration to your MCP client (Claude Desktop, VS Code, etc
       "command": "npx",
       "args": [
         "-y",
-        "@evalor/dida365-mcp-server@latest"
+        "dida365-mcp-server@latest"
       ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id_here",
@@ -218,7 +218,7 @@ For AI agents that may run in YOLO mode, you can enable read-only mode by adding
       "command": "npx",
       "args": [
         "-y",
-        "@evalor/dida365-mcp-server@latest",
+        "dida365-mcp-server@latest",
         "--readonly"
       ],
       "env": {
@@ -344,9 +344,9 @@ If you find any issues or have improvement suggestions, welcome to submit an Iss
 ### Join Development
 
 1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create your feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'feat: implement new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
 5. Open a Pull Request
 
 ## 📄 License
