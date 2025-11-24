@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import type { ToolRegistrationFunction } from "../types.js";
-import { OAUTH_CONSTANTS } from "../../config.js";
+import { getProjectData } from "../../api/index.js";
 
 export const registerGetProjectData: ToolRegistrationFunction = (server, context) => {
     server.registerTool(
@@ -61,39 +61,21 @@ export const registerGetProjectData: ToolRegistrationFunction = (server, context
                     throw new Error("projectId is required and must be a string");
                 }
 
-                // Get valid access token (automatically refreshes if needed)
-                const accessToken = await context.oauthManager.getValidAccessToken();
-
-                // Make API request
-                const response = await fetch(`${OAUTH_CONSTANTS.API_BASE_URL}/open/v1/project/${projectId}/data`, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${accessToken}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-
-                    if (response.status === 404) {
-                        throw new Error(`Project not found: ${projectId}`);
-                    }
-
-                    throw new Error(`API request failed: ${response.status} ${errorText}`);
-                }
-
-                const projectData = await response.json();
+                // Use API layer to get project data
+                const projectData = await getProjectData(projectId);
 
                 return {
-                    content: [{ type: "text", text: JSON.stringify(projectData, null, 2) }],
-                    structuredContent: projectData as Record<string, unknown>,
+                    content: [
+                        { type: "text", text: `Project Data:` },
+                        { type: "text", text: JSON.stringify(projectData) },
+                    ],
+                    structuredContent: projectData as unknown as Record<string, unknown>,
                 };
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
 
                 // Check if it's an authorization error
-                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("token")) {
+                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("Authentication failed")) {
                     return {
                         content: [{
                             type: "text",

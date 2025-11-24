@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import type { ToolRegistrationFunction } from "../types.js";
-import { OAUTH_CONSTANTS } from "../../config.js";
+import { updateTask } from "../../api/index.js";
 
 // ChecklistItem schema for sub-tasks
 const ChecklistItemSchema = z.object({
@@ -14,7 +14,7 @@ const ChecklistItemSchema = z.object({
     isAllDay: z.boolean().optional().describe("Is all-day, default false"),
     sortOrder: z.number().optional().describe("Sort order number"),
     timeZone: z.string().optional().describe("Time zone"),
-    status: z.number().optional().describe("Status: 0=normal, 1=completed"),
+    status: z.number().describe("Status: 0=normal, 1=completed"),
     completedTime: z.string().optional().describe("Completed time, format yyyy-MM-dd'T'HH:mm:ssZ"),
 });
 
@@ -97,7 +97,7 @@ export const registerUpdateTask: ToolRegistrationFunction = (server, context) =>
                         isAllDay?: boolean;
                         sortOrder?: number;
                         timeZone?: string;
-                        status?: number;
+                        status: number;
                         completedTime?: string;
                     }>;
                 };
@@ -110,60 +110,39 @@ export const registerUpdateTask: ToolRegistrationFunction = (server, context) =>
                     throw new Error("projectId is required and must be a non-empty string");
                 }
 
-                // Get valid access token
-                const accessToken = await context.oauthManager.getValidAccessToken();
-
-                // Build request body - must include id and projectId
-                const requestBody: Record<string, unknown> = {
+                // Build request data
+                const requestData = {
                     id: taskId.trim(),
                     projectId: projectId.trim(),
+                    ...(title !== undefined && { title }),
+                    ...(content !== undefined && { content }),
+                    ...(desc !== undefined && { desc }),
+                    ...(isAllDay !== undefined && { isAllDay }),
+                    ...(startDate !== undefined && { startDate }),
+                    ...(dueDate !== undefined && { dueDate }),
+                    ...(timeZone !== undefined && { timeZone }),
+                    ...(reminders !== undefined && { reminders }),
+                    ...(repeatFlag !== undefined && { repeatFlag }),
+                    ...(priority !== undefined && { priority }),
+                    ...(sortOrder !== undefined && { sortOrder }),
+                    ...(items !== undefined && { items }),
                 };
 
-                // Add optional fields
-                if (title !== undefined) requestBody.title = title;
-                if (content !== undefined) requestBody.content = content;
-                if (desc !== undefined) requestBody.desc = desc;
-                if (isAllDay !== undefined) requestBody.isAllDay = isAllDay;
-                if (startDate !== undefined) requestBody.startDate = startDate;
-                if (dueDate !== undefined) requestBody.dueDate = dueDate;
-                if (timeZone !== undefined) requestBody.timeZone = timeZone;
-                if (reminders !== undefined) requestBody.reminders = reminders;
-                if (repeatFlag !== undefined) requestBody.repeatFlag = repeatFlag;
-                if (priority !== undefined) requestBody.priority = priority;
-                if (sortOrder !== undefined) requestBody.sortOrder = sortOrder;
-                if (items !== undefined) requestBody.items = items;
-
-                // Make API request
-                const response = await fetch(`${OAUTH_CONSTANTS.API_BASE_URL}/open/v1/task/${taskId}`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(requestBody),
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(
-                        `Failed to update task: ${response.status} ${response.statusText} - ${errorText}`
-                    );
-                }
-
-                const task = await response.json();
+                // Use API layer to update task
+                const task = await updateTask(taskId.trim(), requestData);
 
                 return {
-                    content: [{
-                        type: "text",
-                        text: `Task updated successfully!\n\n${JSON.stringify(task, null, 2)}`
-                    }],
-                    structuredContent: task as Record<string, unknown>,
+                    content: [
+                        { type: "text", text: `Task updated successfully!` },
+                        { type: "text", text: JSON.stringify(task) },
+                    ],
+                    structuredContent: task as unknown as Record<string, unknown>,
                 };
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
 
                 // Check if it's an authorization error
-                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("token")) {
+                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("Authentication failed")) {
                     return {
                         content: [{
                             type: "text",

@@ -37,6 +37,8 @@ export interface Task {
     status: number; // 0=Normal, 2=Completed
     timeZone?: string;
     kind?: string; // "TEXT", "NOTE", "CHECKLIST"
+    tags?: string[]; // Additional tags for the task
+    etag?: string; // Entity tag for caching/versioning
 }
 
 /**

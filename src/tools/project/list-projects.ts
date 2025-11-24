@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import type { ToolRegistrationFunction } from "../types.js";
-import { OAUTH_CONSTANTS } from "../../config.js";
+import { listProjects } from "../../api/index.js";
 
 export const registerListProjects: ToolRegistrationFunction = (server, context) => {
     server.registerTool(
@@ -31,39 +31,26 @@ export const registerListProjects: ToolRegistrationFunction = (server, context) 
         },
         async () => {
             try {
-                // Get valid access token (automatically refreshes if needed)
-                const accessToken = await context.oauthManager.getValidAccessToken();
-
-                // Make API request
-                const response = await fetch(`${OAUTH_CONSTANTS.API_BASE_URL}/open/v1/project`, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${accessToken}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`API request failed: ${response.status} ${errorText}`);
-                }
-
-                const projects = await response.json();
+                // Use API layer to get projects
+                const projects = await listProjects();
 
                 const output = {
-                    projects: Array.isArray(projects) ? projects : [],
-                    total: Array.isArray(projects) ? projects.length : 0,
+                    projects,
+                    total: projects.length,
                 };
 
                 return {
-                    content: [{ type: "text", text: JSON.stringify(output, null, 2) }],
+                    content: [
+                        { type: "text", text: `Projects List:` },
+                        { type: "text", text: JSON.stringify(output) },
+                    ],
                     structuredContent: output as Record<string, unknown>,
                 };
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
 
                 // Check if it's an authorization error
-                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("token")) {
+                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("Authentication failed")) {
                     return {
                         content: [{
                             type: "text",

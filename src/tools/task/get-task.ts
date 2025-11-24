@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import type { ToolRegistrationFunction } from "../types.js";
-import { OAUTH_CONSTANTS } from "../../config.js";
+import { getTask } from "../../api/index.js";
 
 export const registerGetTask: ToolRegistrationFunction = (server, context) => {
     server.registerTool(
@@ -17,7 +17,7 @@ export const registerGetTask: ToolRegistrationFunction = (server, context) => {
                 projectId: z.string().describe("Project ID (required)"),
                 taskId: z.string().describe("Task ID (required)"),
             },
-            outputSchema: {
+            outputSchema: z.object({
                 id: z.string(),
                 projectId: z.string(),
                 title: z.string(),
@@ -35,7 +35,9 @@ export const registerGetTask: ToolRegistrationFunction = (server, context) => {
                 repeatFlag: z.string().optional(),
                 items: z.array(z.any()).optional(),
                 kind: z.string().optional(),
-            },
+                tags: z.array(z.string()).optional(),
+                etag: z.string().optional(),
+            }).passthrough(),
         },
         async (args) => {
             try {
@@ -52,38 +54,21 @@ export const registerGetTask: ToolRegistrationFunction = (server, context) => {
                     throw new Error("taskId is required and must be a non-empty string");
                 }
 
-                // Get valid access token
-                const accessToken = await context.oauthManager.getValidAccessToken();
-
-                // Make API request
-                const response = await fetch(
-                    `${OAUTH_CONSTANTS.API_BASE_URL}/open/v1/project/${projectId.trim()}/task/${taskId.trim()}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(
-                        `Failed to get task: ${response.status} ${response.statusText} - ${errorText}`
-                    );
-                }
-
-                const task = await response.json();
+                // Use API layer to get task
+                const task = await getTask(projectId.trim(), taskId.trim());
 
                 return {
-                    content: [{ type: "text", text: JSON.stringify(task, null, 2) }],
-                    structuredContent: task as Record<string, unknown>,
+                    content: [
+                        { type: "text", text: `Task retrieved successfully!` },
+                        { type: "text", text: JSON.stringify(task) }
+                    ],
+                    structuredContent: task as unknown as Record<string, unknown>,
                 };
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
 
                 // Check if it's an authorization error
-                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("token")) {
+                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("Authentication failed")) {
                     return {
                         content: [{
                             type: "text",

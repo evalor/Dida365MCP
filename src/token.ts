@@ -7,7 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { OAUTH_CONSTANTS } from './config.js';
+import { APP_CONFIG } from './config.js';
 
 /**
  * Token data structure
@@ -112,7 +112,7 @@ export async function refreshAccessToken(
     clientId: string,
     clientSecret: string
 ): Promise<TokenData> {
-    const tokenEndpoint = OAUTH_CONSTANTS.TOKEN_ENDPOINT;
+    const tokenEndpoint = APP_CONFIG.OAUTH.TOKEN_ENDPOINT;
 
     const params = new URLSearchParams({
         grant_type: 'refresh_token',
@@ -142,7 +142,7 @@ export async function refreshAccessToken(
         refresh_token: data.refresh_token || refreshToken, // Some implementations don't return new refresh_token
         expires_at: Date.now() + (data.expires_in * 1000),
         created_at: Date.now(),
-        scope: data.scope || OAUTH_CONSTANTS.SCOPE,
+        scope: data.scope || APP_CONFIG.OAUTH.SCOPE,
         token_type: data.token_type,
     };
 

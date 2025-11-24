@@ -5,7 +5,7 @@
  */
 
 import * as http from 'http';
-import { OAUTH_CONSTANTS } from './config.js';
+import { APP_CONFIG } from './config.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -47,8 +47,8 @@ export class OAuthCallbackServer {
             });
 
             // Listen on port
-            const host = OAUTH_CONSTANTS.CALLBACK_HOST;
-            const port = OAUTH_CONSTANTS.CALLBACK_PORT;
+            const host = APP_CONFIG.OAUTH.CALLBACK_HOST;
+            const port = APP_CONFIG.OAUTH.CALLBACK_PORT;
 
             this.server.listen(port, host, () => {
                 console.error(`OAuth callback server listening on http://${host}:${port}`);

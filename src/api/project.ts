@@ -5,6 +5,7 @@
  */
 
 import httpClient from '../utils/http.js';
+import { ApiResponseEmptyError } from '../utils/http.js';
 import { Project, ProjectData, CreateProjectRequest, UpdateProjectRequest } from './types.js';
 
 const BASE_URL = '/open/v1/project';
@@ -21,16 +22,36 @@ export async function listProjects(): Promise<Project[]> {
  * Get project by ID
  */
 export async function getProject(projectId: string): Promise<Project> {
-    const response = await httpClient.get<Project>(`${BASE_URL}/${projectId}`);
-    return response.data;
+    try {
+        const response = await httpClient.get<Project>(`${BASE_URL}/${projectId}`);
+        if (Object.keys(response).length === 0) {
+            throw new Error(`Project with ID ${projectId} not found`);
+        }
+        return response.data;
+    } catch (error) {
+        if (error instanceof ApiResponseEmptyError) {
+            throw new Error(`Project with ID ${projectId} not found`);
+        }
+        throw error;
+    }
 }
 
 /**
  * Get project with all data (tasks and columns)
  */
 export async function getProjectData(projectId: string): Promise<ProjectData> {
-    const response = await httpClient.get<ProjectData>(`${BASE_URL}/${projectId}/data`);
-    return response.data;
+    try {
+        const response = await httpClient.get<ProjectData>(`${BASE_URL}/${projectId}/data`);
+        if (Object.keys(response.data).length === 0) {
+            throw new Error(`Project data with ID ${projectId} not found`);
+        }
+        return response.data;
+    } catch (error) {
+        if (error instanceof ApiResponseEmptyError) {
+            throw new Error(`Project with ID ${projectId} not found`);
+        }
+        throw error;
+    }
 }
 
 /**
@@ -45,13 +66,28 @@ export async function createProject(data: CreateProjectRequest): Promise<Project
  * Update an existing project
  */
 export async function updateProject(projectId: string, data: UpdateProjectRequest): Promise<Project> {
-    const response = await httpClient.post<Project>(`${BASE_URL}/${projectId}`, data);
-    return response.data;
+    try {
+        const response = await httpClient.post<Project>(`${BASE_URL}/${projectId}`, data);
+        return response.data;
+    } catch (error) {
+        if (error instanceof ApiResponseEmptyError) {
+            throw new Error(`Project with ID ${projectId} not found`);
+        }
+        throw error;
+    }
 }
 
 /**
  * Delete a project
  */
 export async function deleteProject(projectId: string): Promise<void> {
-    await httpClient.delete(`${BASE_URL}/${projectId}`);
+    try {
+        await httpClient.delete(`${BASE_URL}/${projectId}`);
+    } catch (error) {
+        if (error instanceof ApiResponseEmptyError) {
+            // For delete operations, empty response indicates success
+            return;
+        }
+        throw error;
+    }
 }

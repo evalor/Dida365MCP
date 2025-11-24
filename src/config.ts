@@ -1,7 +1,48 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
 /**
- * OAuth2 Configuration Module
+ * Load environment variables from .env file (development only)
+ *
+ * In production (MCP runtime), environment variables should be passed via
+ * the MCP client's configuration file (e.g., claude_desktop_config.json).
+ * The .env file is only for local development convenience.
+ */
+
+// Load .env file manually to avoid dotenv stdout output in MCP
+const envPath = path.join(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+    try {
+        const envContent = fs.readFileSync(envPath, 'utf8');
+        const envLines = envContent.split('\n');
+
+        for (const line of envLines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine && !trimmedLine.startsWith('#')) {
+                const [key, ...valueParts] = trimmedLine.split('=');
+                if (key && valueParts.length > 0) {
+                    const value = valueParts.join('=').trim();
+                    if (value.startsWith('"') && value.endsWith('"')) {
+                        process.env[key.trim()] = value.slice(1, -1);
+                    } else if (value.startsWith("'") && value.endsWith("'")) {
+                        process.env[key.trim()] = value.slice(1, -1);
+                    } else {
+                        process.env[key.trim()] = value;
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        // Silently ignore .env loading errors in production
+        console.error('Warning: Failed to load .env file:', error);
+    }
+}
+
+/**
+ * Application Configuration Module
  * 
- * Responsible for loading and validating Dida365 OAuth2 configuration parameters
+ * Central configuration management for the Dida365 MCP Server
+ * Contains all application-wide constants and settings
  */
 
 /**
@@ -44,25 +85,32 @@ export function isReadOnly(): boolean {
 }
 
 /**
- * Fixed configuration constants
+ * Application configuration constants
+ * Contains all fixed configuration values for the application
  */
-export const OAUTH_CONSTANTS = {
-    // Fixed callback address
-    REDIRECT_URI: 'http://localhost:8521/callback',
+export const APP_CONFIG = {
+    // OAuth2 Configuration
+    OAUTH: {
+        // Fixed callback address
+        REDIRECT_URI: 'http://localhost:8521/callback',
 
-    // Callback server configuration
-    CALLBACK_HOST: 'localhost',
-    CALLBACK_PORT: 8521,
+        // Callback server configuration
+        CALLBACK_HOST: 'localhost',
+        CALLBACK_PORT: 8521,
 
-    // Fixed permission scope
-    SCOPE: 'tasks:read tasks:write',
+        // Fixed permission scope
+        SCOPE: 'tasks:read tasks:write',
 
-    // Dida365 OAuth endpoints
-    AUTH_ENDPOINT: 'https://dida365.com/oauth/authorize',
-    TOKEN_ENDPOINT: 'https://dida365.com/oauth/token',
+        // Dida365 OAuth endpoints
+        AUTH_ENDPOINT: 'https://dida365.com/oauth/authorize',
+        TOKEN_ENDPOINT: 'https://dida365.com/oauth/token',
+    },
 
-    // Dida365 API base URL
-    API_BASE_URL: 'https://api.dida365.com',
+    // API Configuration
+    API: {
+        // Dida365 API base URL
+        BASE_URL: 'https://api.dida365.com',
+    },
 } as const;
 
 /**
@@ -106,10 +154,10 @@ export function loadOAuthConfig(): OAuth2Config {
     return {
         clientId: clientId.trim(),
         clientSecret: clientSecret.trim(),
-        redirectUri: OAUTH_CONSTANTS.REDIRECT_URI,
-        scope: OAUTH_CONSTANTS.SCOPE,
-        authEndpoint: OAUTH_CONSTANTS.AUTH_ENDPOINT,
-        tokenEndpoint: OAUTH_CONSTANTS.TOKEN_ENDPOINT,
+        redirectUri: APP_CONFIG.OAUTH.REDIRECT_URI,
+        scope: APP_CONFIG.OAUTH.SCOPE,
+        authEndpoint: APP_CONFIG.OAUTH.AUTH_ENDPOINT,
+        tokenEndpoint: APP_CONFIG.OAUTH.TOKEN_ENDPOINT,
     };
 }
 
@@ -125,7 +173,7 @@ export function validateOAuthConfig(config: OAuth2Config): boolean {
         !!config.clientSecret &&
         config.clientId.length > 0 &&
         config.clientSecret.length > 0 &&
-        config.redirectUri === OAUTH_CONSTANTS.REDIRECT_URI
+        config.redirectUri === APP_CONFIG.OAUTH.REDIRECT_URI
     );
 }
 

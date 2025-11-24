@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import type { ToolRegistrationFunction } from "../types.js";
-import { OAUTH_CONSTANTS } from "../../config.js";
+import { deleteProject } from "../../api/index.js";
 
 export const registerDeleteProject: ToolRegistrationFunction = (server, context) => {
     server.registerTool(
@@ -17,8 +17,6 @@ export const registerDeleteProject: ToolRegistrationFunction = (server, context)
                 projectId: z.string().describe("The unique ID of the project to delete"),
             },
             outputSchema: {
-                success: z.boolean(),
-                message: z.string(),
                 projectId: z.string(),
             },
         },
@@ -31,46 +29,25 @@ export const registerDeleteProject: ToolRegistrationFunction = (server, context)
                     throw new Error("projectId is required and must be a string");
                 }
 
-                // Get valid access token (automatically refreshes if needed)
-                const accessToken = await context.oauthManager.getValidAccessToken();
-
-                // Make API request
-                const response = await fetch(`${OAUTH_CONSTANTS.API_BASE_URL}/open/v1/project/${projectId}`, {
-                    method: "DELETE",
-                    headers: {
-                        "Authorization": `Bearer ${accessToken}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-
-                    if (response.status === 404) {
-                        throw new Error(`Project not found: ${projectId}`);
-                    }
-
-                    throw new Error(`API request failed: ${response.status} ${errorText}`);
-                }
+                // Use API layer to delete project
+                await deleteProject(projectId);
 
                 const output = {
-                    success: true,
-                    message: `Project ${projectId} has been deleted successfully.`,
                     projectId: projectId,
                 };
 
                 return {
-                    content: [{
-                        type: "text",
-                        text: `Project deleted successfully!\n\nProject ID: ${projectId}`
-                    }],
+                    content: [
+                        { type: "text", text: `Project deleted successfully!` },
+                        { type: "text", text: JSON.stringify(output) },
+                    ],
                     structuredContent: output as Record<string, unknown>,
                 };
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
 
                 // Check if it's an authorization error
-                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("token")) {
+                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("Authentication failed")) {
                     return {
                         content: [{
                             type: "text",

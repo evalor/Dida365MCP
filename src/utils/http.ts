@@ -7,6 +7,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { TokenManager } from '../token.js';
 import { loadOAuthConfig } from '../config.js';
+import { APP_CONFIG } from '../config.js';
 
 /**
  * HTTP Client configuration
@@ -73,7 +74,7 @@ export class HttpClient {
 
         // Create axios instance with default config
         this.axiosInstance = axios.create({
-            baseURL: config.baseURL || 'https://api.ticktick.com',
+            baseURL: config.baseURL || APP_CONFIG.API.BASE_URL,
             timeout: config.timeout || 30000, // 30 seconds
             headers: {
                 'Content-Type': 'application/json',
@@ -118,15 +119,34 @@ export class HttpClient {
                 if (error.response) {
                     const { status, statusText, data } = error.response;
 
+                    // Parse the data
+                    let parsedData = data;
+                    if (typeof data === 'string' && data.trim() !== '') {
+                        try {
+                            parsedData = JSON.parse(data);
+                        } catch (e) {
+                            // Failed to parse, keep original
+                        }
+                    }
+
                     // Handle 401 Unauthorized (token expired)
                     if (status === 401) {
                         console.error('Token expired or invalid, clearing token');
                         this.tokenManager.clearToken();
-                        throw new ApiError(status, statusText, 'Authentication failed. Please re-authorize.', data);
+                        throw new ApiError(status, statusText, 'Authentication failed. Please re-authorize.', parsedData);
+                    }
+
+                    // Handle 500 Internal Server Error
+                    if (status >= 500) {
+                        let errorMessage = `API request failed: ${statusText}`;
+                        if (parsedData && typeof parsedData === 'object' && 'errorMessage' in parsedData && typeof parsedData.errorMessage === 'string') {
+                            errorMessage = parsedData.errorMessage;
+                        }
+                        throw new ApiError(status, statusText, errorMessage, parsedData);
                     }
 
                     // Handle other HTTP errors
-                    throw new ApiError(status, statusText, `API request failed: ${statusText}`, data);
+                    throw new ApiError(status, statusText, `API request failed: ${statusText}`, parsedData);
                 } else if (error.request) {
                     // Network error
                     throw new ApiError(0, 'Network Error', 'Network request failed', error.message);

@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import type { ToolRegistrationFunction } from "../types.js";
-import { OAUTH_CONSTANTS } from "../../config.js";
+import { updateProject } from "../../api/index.js";
 
 export const registerUpdateProject: ToolRegistrationFunction = (server, context) => {
     server.registerTool(
@@ -54,52 +54,30 @@ export const registerUpdateProject: ToolRegistrationFunction = (server, context)
                     throw new Error("At least one field to update must be provided (name, color, sortOrder, viewMode, or kind)");
                 }
 
-                // Get valid access token (automatically refreshes if needed)
-                const accessToken = await context.oauthManager.getValidAccessToken();
+                // Build request data (only include fields that are provided)
+                const requestData = {
+                    ...(name !== undefined && { name: name.trim() }),
+                    ...(color !== undefined && { color }),
+                    ...(sortOrder !== undefined && { sortOrder }),
+                    ...(viewMode !== undefined && { viewMode }),
+                    ...(kind !== undefined && { kind }),
+                };
 
-                // Build request body (only include fields that are provided)
-                const requestBody: Record<string, unknown> = {};
-
-                if (name !== undefined) requestBody.name = name.trim();
-                if (color !== undefined) requestBody.color = color;
-                if (sortOrder !== undefined) requestBody.sortOrder = sortOrder;
-                if (viewMode !== undefined) requestBody.viewMode = viewMode;
-                if (kind !== undefined) requestBody.kind = kind;
-
-                // Make API request
-                const response = await fetch(`${OAUTH_CONSTANTS.API_BASE_URL}/open/v1/project/${projectId}`, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${accessToken}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(requestBody),
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-
-                    if (response.status === 404) {
-                        throw new Error(`Project not found: ${projectId}`);
-                    }
-
-                    throw new Error(`API request failed: ${response.status} ${errorText}`);
-                }
-
-                const project = await response.json();
+                // Use API layer to update project
+                const project = await updateProject(projectId, requestData);
 
                 return {
-                    content: [{
-                        type: "text",
-                        text: `Project updated successfully!\n\n${JSON.stringify(project, null, 2)}`
-                    }],
-                    structuredContent: project as Record<string, unknown>,
+                    content: [
+                        { type: "text", text: `Project updated successfully!` },
+                        { type: "text", text: JSON.stringify(project) },
+                    ],
+                    structuredContent: project as unknown as Record<string, unknown>,
                 };
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
 
                 // Check if it's an authorization error
-                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("token")) {
+                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("Authentication failed")) {
                     return {
                         content: [{
                             type: "text",

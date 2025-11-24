@@ -5,7 +5,7 @@
  */
 
 import * as crypto from 'crypto';
-import { OAuth2Config, OAUTH_CONSTANTS } from './config.js';
+import { OAuth2Config, APP_CONFIG } from './config.js';
 import { TokenManager, TokenData } from './token.js';
 import { OAuthCallbackServer } from './oauth-server.js';
 import { AuthStateManager, AuthState } from './auth-state.js';

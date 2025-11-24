@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import type { ToolRegistrationFunction } from "../types.js";
-import { OAUTH_CONSTANTS } from "../../config.js";
+import { deleteTask } from "../../api/index.js";
 
 export const registerDeleteTask: ToolRegistrationFunction = (server, context) => {
     server.registerTool(
@@ -17,12 +17,10 @@ export const registerDeleteTask: ToolRegistrationFunction = (server, context) =>
                 projectId: z.string().describe("Project ID (required)"),
                 taskId: z.string().describe("Task ID (required)"),
             },
-            outputSchema: {
-                success: z.boolean(),
-                message: z.string(),
+            outputSchema: z.object({
                 taskId: z.string(),
                 projectId: z.string(),
-            },
+            }).passthrough(),
         },
         async (args) => {
             try {
@@ -39,47 +37,26 @@ export const registerDeleteTask: ToolRegistrationFunction = (server, context) =>
                     throw new Error("taskId is required and must be a non-empty string");
                 }
 
-                // Get valid access token
-                const accessToken = await context.oauthManager.getValidAccessToken();
+                // Use API layer to delete task
+                await deleteTask(projectId.trim(), taskId.trim());
 
-                // Make API request
-                const response = await fetch(
-                    `${OAUTH_CONSTANTS.API_BASE_URL}/open/v1/project/${projectId.trim()}/task/${taskId.trim()}`,
-                    {
-                        method: "DELETE",
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                        },
-                    }
-                );
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(
-                        `Failed to delete task: ${response.status} ${response.statusText} - ${errorText}`
-                    );
-                }
-
-                // DELETE returns 200 with no body
                 const output = {
-                    success: true,
-                    message: `Task ${taskId} has been deleted successfully.`,
                     taskId: taskId,
                     projectId: projectId,
                 };
 
                 return {
-                    content: [{
-                        type: "text",
-                        text: `Task deleted successfully!\n\nTask ID: ${taskId}\nProject ID: ${projectId}`
-                    }],
+                    content: [
+                        { type: "text", text: `Task deleted successfully!` },
+                        { type: "text", text: JSON.stringify(output) },
+                    ],
                     structuredContent: output as Record<string, unknown>,
                 };
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
 
                 // Check if it's an authorization error
-                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("token")) {
+                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("Authentication failed")) {
                     return {
                         content: [{
                             type: "text",
