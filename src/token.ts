@@ -48,11 +48,6 @@ function ensureTokenDir(): void {
 export function saveToken(tokenData: TokenData): void {
     ensureTokenDir();
 
-    // Validate that client metadata is present
-    if (!tokenData.clientId || !tokenData.clientSecretHash) {
-        console.error('Warning: Saving token without client metadata - this should not happen');
-    }
-
     const data = JSON.stringify(tokenData, null, 2);
     fs.writeFileSync(TOKEN_FILE, data, { mode: 0o600 });
 
@@ -123,20 +118,17 @@ export function validateTokenCredentials(
 ): boolean {
     // If token doesn't have client metadata, treat as invalid (legacy token)
     if (!tokenData.clientId || !tokenData.clientSecretHash) {
-        console.error('Token missing client metadata - treating as invalid (legacy token)');
         return false;
     }
 
     // Validate client ID matches
     if (tokenData.clientId !== clientId) {
-        console.error('Token client ID mismatch - token belongs to a different OAuth client');
         return false;
     }
 
     // Validate client secret hash matches
     const currentSecretHash = sha256(clientSecret);
     if (tokenData.clientSecretHash !== currentSecretHash) {
-        console.error('Token client secret mismatch - credentials have changed');
         return false;
     }
 
@@ -217,16 +209,11 @@ export class TokenManager {
             // Validate that token belongs to current client credentials
             if (validateTokenCredentials(loadedToken, clientId, clientSecret)) {
                 this.tokenData = loadedToken;
-                console.error('Loaded valid token for current client credentials');
             } else {
-                console.error('Token credential mismatch detected - discarding old token');
-                console.error('Please re-authorize with the new client credentials');
                 // Delete the invalid token to avoid confusion
                 deleteToken();
                 this.tokenData = null;
             }
-        } else {
-            console.error('No token found on startup');
         }
     }
 
