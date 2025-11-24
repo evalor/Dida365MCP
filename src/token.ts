@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { APP_CONFIG } from './config.js';
+import { sha256 } from './utils/hash.js';
 
 /**
  * Token data structure
@@ -19,6 +20,9 @@ export interface TokenData {
     created_at: number;  // Unix timestamp (ms)
     scope: string;
     token_type?: string;
+    // Client credential metadata (for validation)
+    clientId?: string;
+    clientSecretHash?: string;
 }
 
 /**
@@ -39,7 +43,7 @@ function ensureTokenDir(): void {
 /**
  * Save Token to local file
  * 
- * @param {TokenData} tokenData - Token data
+ * @param {TokenData} tokenData - Token data (must include clientId and clientSecretHash)
  */
 export function saveToken(tokenData: TokenData): void {
     ensureTokenDir();
@@ -100,6 +104,38 @@ export function isTokenExpired(tokenData: TokenData, bufferSeconds: number = 300
 }
 
 /**
+ * Validate if token belongs to the current client credentials
+ * 
+ * @param {TokenData} tokenData - Token data to validate
+ * @param {string} clientId - Current OAuth Client ID
+ * @param {string} clientSecret - Current OAuth Client Secret
+ * @returns {boolean} Whether token belongs to the current client
+ */
+export function validateTokenCredentials(
+    tokenData: TokenData,
+    clientId: string,
+    clientSecret: string
+): boolean {
+    // If token doesn't have client metadata, treat as invalid (legacy token)
+    if (!tokenData.clientId || !tokenData.clientSecretHash) {
+        return false;
+    }
+
+    // Validate client ID matches
+    if (tokenData.clientId !== clientId) {
+        return false;
+    }
+
+    // Validate client secret hash matches
+    const currentSecretHash = sha256(clientSecret);
+    if (tokenData.clientSecretHash !== currentSecretHash) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
  * Refresh Access Token
  * 
  * @param {string} refreshToken - Refresh Token
@@ -136,7 +172,7 @@ export async function refreshAccessToken(
 
     const data = await response.json() as any;
 
-    // Construct new Token data
+    // Construct new Token data with client credentials metadata
     const newTokenData: TokenData = {
         access_token: data.access_token,
         refresh_token: data.refresh_token || refreshToken, // Some implementations don't return new refresh_token
@@ -144,6 +180,8 @@ export async function refreshAccessToken(
         created_at: Date.now(),
         scope: data.scope || APP_CONFIG.OAUTH.SCOPE,
         token_type: data.token_type,
+        clientId: clientId,
+        clientSecretHash: sha256(clientSecret),
     };
 
     // Auto-save new Token
@@ -165,7 +203,18 @@ export class TokenManager {
         this.clientSecret = clientSecret;
 
         // Try to load saved Token on startup
-        this.tokenData = loadToken();
+        const loadedToken = loadToken();
+        
+        if (loadedToken) {
+            // Validate that token belongs to current client credentials
+            if (validateTokenCredentials(loadedToken, clientId, clientSecret)) {
+                this.tokenData = loadedToken;
+            } else {
+                // Delete the invalid token to avoid confusion
+                deleteToken();
+                this.tokenData = null;
+            }
+        }
     }
 
     /**

@@ -9,6 +9,7 @@ import { OAuth2Config, APP_CONFIG } from './config.js';
 import { TokenManager, TokenData } from './token.js';
 import { OAuthCallbackServer } from './oauth-server.js';
 import { AuthStateManager, AuthState } from './auth-state.js';
+import { sha256 } from './utils/hash.js';
 
 /**
  * OAuth Manager
@@ -134,7 +135,7 @@ export class OAuthManager {
 
         const data = await response.json() as any;
 
-        // Construct Token data
+        // Construct Token data with client credentials metadata
         const tokenData: TokenData = {
             access_token: data.access_token,
             refresh_token: data.refresh_token,
@@ -142,6 +143,8 @@ export class OAuthManager {
             created_at: Date.now(),
             scope: data.scope || this.config.scope,
             token_type: data.token_type,
+            clientId: this.config.clientId,
+            clientSecretHash: sha256(this.config.clientSecret),
         };
 
         return tokenData;
