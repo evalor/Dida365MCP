@@ -19,12 +19,31 @@ This glossary provides terminology mappings between English (TickTick) and Simpl
 
 | English | 中文 | Parameter/Value | Notes |
 |---------|------|-----------------|-------|
-| Inbox | 收集箱 | projectId: "inbox" | Default location for uncategorized tasks (未分类任务的默认位置) |
+| Inbox | 收集箱 | projectId: "inbox" | Temporary location for tasks that are inconvenient to classify (临时存放暂时不便分类的任务) |
 | Project | 清单 | projectId | Container for organizing tasks (用于组织任务的容器) |
 | Task | 任务 | taskId | To-do item (待办事项) |
 | Subtask | 子任务 | items[] | Child item under a task (任务下的子项) |
 | Checklist Item | 检查项 | items[] | Same as subtask (与子任务相同) |
 | Note | 笔记 | kind: "NOTE" | Used for recording text content (用于记录文本内容) |
+
+### Important: Inbox vs Project (收集箱与清单的区别)
+
+The **Inbox (收集箱)** is designed for tasks that are **temporarily inconvenient to classify**. It should NOT be used when:
+- The user explicitly requests to place the task in a specific project (清单)
+- The context clearly indicates which project the task belongs to
+- The task has an obvious category or belongs to an existing project
+
+**When to use Inbox:**
+- User explicitly says "收集箱" or "inbox"
+- User doesn't specify any project and the task has no clear category
+- User wants to quickly capture a task for later organization
+
+**When to use a Project:**
+- User mentions a specific project name (e.g., "工作清单", "学习清单")
+- Context suggests a clear category (e.g., work tasks go to work project)
+- User says "在我的XX清单里创建任务" (create task in my XX project)
+
+收集箱是用于**临时存放暂时不便分类的任务**。当用户明确指定了清单，或者根据上下文可以判断任务应该属于某个清单时，不应该将任务放入收集箱。
 
 ## Task Properties (任务属性)
 
@@ -84,6 +103,7 @@ This glossary provides terminology mappings between English (TickTick) and Simpl
 
 - When Chinese users say "清单" (qingdan), they mean "Project" in the English interface
 - "收集箱" (shouji xiang) refers to the Inbox, which is accessed using projectId: "inbox"
+- **Inbox Usage**: The inbox is for temporarily storing tasks that are inconvenient to classify. When users specify a project or context indicates a project, do NOT use inbox.
 - Priority values: 高(high)=5, 中(medium)=3, 低(low)=1, 无(none)=0
 - The app is called "滴答清单" in China (Dida365) and "TickTick" internationally
 `;
