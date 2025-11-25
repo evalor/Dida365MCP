@@ -62,9 +62,8 @@ export class OAuthManager {
      */
     async getAuthorizationUrl(): Promise<string> {
         // If authorization is already in progress, return existing URL (idempotent)
-        // Verify both URL and state exist to ensure valid pending state
-        if (this.stateManager.isPending() && this.currentAuthUrl && this.currentState) {
-            return this.currentAuthUrl;
+        if (this.isValidPendingState()) {
+            return this.currentAuthUrl!;
         }
 
         // If we reach here during PENDING state, it means we have an inconsistent state
@@ -195,6 +194,17 @@ export class OAuthManager {
     }
 
     /**
+     * Check if there's a valid pending authorization state
+     * 
+     * @returns {boolean} True if authorization is pending with valid URL and state
+     */
+    private isValidPendingState(): boolean {
+        return this.stateManager.isPending() && 
+               this.currentAuthUrl !== null && 
+               this.currentState !== null;
+    }
+
+    /**
      * Get valid Access Token
      * 
      * @returns {Promise<string>} Valid Access Token
@@ -268,8 +278,9 @@ export class OAuthManager {
             this.callbackServer = null;
         }
 
-        // Clear auth URL
+        // Clear auth URL and state
         this.currentAuthUrl = null;
+        this.currentState = null;
 
         console.error('Authorization revoked, token cleared');
     }
