@@ -286,7 +286,7 @@ For AI agents that may run in YOLO mode, you can enable read-only mode by adding
 
 ## 🛠️ Available MCP Tools
 
-This server provides **14 MCP tools** across three categories, ✔️ 100% implemented all API interfaces described in the open platform documentation.
+This server provides **15 MCP tools** across three categories, ✔️ 100% implemented all API interfaces described in the open platform documentation.
 
 | Category    | Tool Name           | Description                                              | Required Parameters   |
 | ----------- | ------------------- | -------------------------------------------------------- | --------------------- |
@@ -299,13 +299,14 @@ This server provides **14 MCP tools** across three categories, ✔️ 100% imple
 |             | `create_project`    | Create a new project                                     | `name`                |
 |             | `update_project`    | Update existing project                                  | `projectId`           |
 |             | `delete_project`    | Delete a project (⚠️ irreversible)                        | `projectId`           |
-| **Task**    | `create_task`       | Create a new task (supports subtasks, reminders, repeat) | `title`, `projectId`  |
+| **Task**    | `list_tasks`        | List tasks with filtering (batch query across projects)  | -                     |
+|             | `create_task`       | Create task(s) (supports batch & subtasks)               | `tasks[]`             |
 |             | `get_task`          | Get detailed task information                            | `projectId`, `taskId` |
-|             | `update_task`       | Update existing task                                     | `taskId`, `projectId` |
-|             | `delete_task`       | Delete a task (⚠️ irreversible)                           | `projectId`, `taskId` |
-|             | `complete_task`     | Mark task as completed                                   | `projectId`, `taskId` |
+|             | `update_task`       | Update task(s) (supports batch updates)                  | `tasks[]`             |
+|             | `delete_task`       | Delete task(s) (⚠️ irreversible, supports batch)          | `tasks[]`             |
+|             | `complete_task`     | Mark task(s) as completed (supports batch)               | `tasks[]`             |
 
-> **Note**: In read-only mode, only read operations are available (`get_auth_url`, `check_auth_status`, `revoke_auth`, `list_projects`, `get_project`, `get_project_data`, `get_task`). All write/delete operations are blocked for security.
+> **Note**: In read-only mode, only read operations are available (`get_auth_url`, `check_auth_status`, `revoke_auth`, `list_projects`, `get_project`, `get_project_data`, `list_tasks`, `get_task`). All write/delete operations are blocked for security.
 
 ## 📁 Project Structure
 
@@ -316,10 +317,12 @@ src/
 ├── oauth-server.ts       # Local callback server
 ├── config.ts             # Configuration management
 ├── token.ts              # Token persistence
-└── tools/                # MCP tools (14 total)
+├── utils/                # Utility modules
+│   └── batch.ts          # Batch execution utilities
+└── tools/                # MCP tools (15 total)
     ├── auth/             # OAuth tools (3)
     ├── project/          # Project management (6)
-    └── task/             # Task management (5)
+    └── task/             # Task management (6)
 ```
 
 ## 🗺️ Roadmap
@@ -331,12 +334,13 @@ src/
 - [x] Complete project management (CRUD)
 - [x] Complete task management (subtasks, reminders, repeat)
 - [x] Read-only mode for AI agents
+- [x] Batch operations support (create/update/delete/complete multiple tasks)
+- [x] List tasks with filtering (cross-project queries, date/priority filters)
+- [x] Inbox task operations support
 
 ### 🚀 Next Steps
 
-- [ ] Batch operations support (create/update/delete multiple tasks)
 - [ ] Optimize tool descriptions for better LLM integration
-- [ ] Inbox task operations support
 - [ ] Add parameters to limit the ProjectId that the MCP can access
 
 ### 💡 Future Ideas
