@@ -12,7 +12,11 @@ export const registerGetProjectData: ToolRegistrationFunction = (server, context
         "get_project_data",
         {
             title: "Get Project Data",
-            description: "Get complete project data including the project details, all tasks, and columns (for kanban view). This provides a comprehensive view of the entire project content.",
+            description: `Get complete project data including project details, tasks, and columns (for kanban view).
+
+⚠️ IMPORTANT: Only returns UNCOMPLETED tasks (status=0). Completed tasks are NOT available via this API.
+
+💡 TIP: For filtering tasks by date/priority, use 'list_tasks' instead.`,
             inputSchema: {
                 projectId: z.string().describe("The unique ID of the project to retrieve data for"),
             },

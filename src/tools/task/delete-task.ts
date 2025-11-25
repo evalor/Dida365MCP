@@ -1,56 +1,107 @@
 /**
  * Tool: Delete Task
- * Delete a task from a project
+ * Delete one or more tasks from projects (supports batch operations)
  */
 
 import { z } from "zod";
 import type { ToolRegistrationFunction } from "../types.js";
 import { deleteTask } from "../../api/index.js";
+import { batchExecute, formatBatchResultsSimple } from "../../utils/batch.js";
+
+// Single task reference schema
+const TaskRefSchema = z.object({
+    projectId: z.string().describe("Project ID (required)"),
+    taskId: z.string().describe("Task ID (required)"),
+});
+
+// Task reference type
+type TaskRef = z.infer<typeof TaskRefSchema>;
 
 export const registerDeleteTask: ToolRegistrationFunction = (server, context) => {
     server.registerTool(
         "delete_task",
         {
-            title: "Delete Task",
-            description: "Delete a specific task from a project. This operation cannot be undone.",
+            title: "Delete Task(s)",
+            description: `Delete one or more tasks from projects. Supports batch deletion.
+
+⚠️ WARNING: This operation cannot be undone!
+
+INPUT FORMAT:
+{ "tasks": [{ "projectId": "xxx", "taskId": "yyy" }, ...] }
+
+REQUIRED per task:
+- projectId: Project ID containing the task
+- taskId: ID of the task to delete
+
+BEHAVIOR:
+- NOT atomic: Some tasks may succeed while others fail
+- Check summary.failed > 0 for failures
+- Use failedItems array to retry failed tasks
+
+EXAMPLE (single):
+{ "tasks": [{ "projectId": "abc123", "taskId": "task456" }] }
+
+EXAMPLE (batch):
+{ "tasks": [
+  { "projectId": "abc123", "taskId": "task456" },
+  { "projectId": "abc123", "taskId": "task789" }
+]}`,
             inputSchema: {
-                projectId: z.string().describe("Project ID (required)"),
-                taskId: z.string().describe("Task ID (required)"),
+                tasks: z.array(TaskRefSchema).min(1).describe("Array of tasks to delete"),
             },
-            outputSchema: z.object({
-                taskId: z.string(),
-                projectId: z.string(),
-            }).passthrough(),
         },
         async (args) => {
             try {
-                const { projectId, taskId } = args as {
-                    projectId: string;
-                    taskId: string;
-                };
+                const { tasks } = args as { tasks: TaskRef[] };
 
-                // Validate required fields
-                if (!projectId || typeof projectId !== "string" || projectId.trim() === "") {
-                    throw new Error("projectId is required and must be a non-empty string");
-                }
-                if (!taskId || typeof taskId !== "string" || taskId.trim() === "") {
-                    throw new Error("taskId is required and must be a non-empty string");
+                // Validate tasks array
+                if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
+                    throw new Error("tasks array is required and must contain at least one task reference");
                 }
 
-                // Use API layer to delete task
-                await deleteTask(projectId.trim(), taskId.trim());
+                // Validate each task reference
+                for (let i = 0; i < tasks.length; i++) {
+                    const task = tasks[i];
+                    if (!task.projectId || typeof task.projectId !== "string" || task.projectId.trim() === "") {
+                        throw new Error(`tasks[${i}].projectId is required and must be a non-empty string`);
+                    }
+                    if (!task.taskId || typeof task.taskId !== "string" || task.taskId.trim() === "") {
+                        throw new Error(`tasks[${i}].taskId is required and must be a non-empty string`);
+                    }
+                }
 
-                const output = {
-                    taskId: taskId,
-                    projectId: projectId,
-                };
+                // Execute batch deletion
+                const results = await batchExecute<TaskRef, void>(
+                    tasks,
+                    async (taskRef) => {
+                        await deleteTask(taskRef.projectId.trim(), taskRef.taskId.trim());
+                    }
+                );
+
+                const output = formatBatchResultsSimple(results);
+
+                // Generate summary message
+                const { summary } = output;
+                let message: string;
+                if (summary.failed === 0) {
+                    message = summary.total === 1
+                        ? "Task deleted successfully!"
+                        : `All ${summary.total} tasks deleted successfully!`;
+                } else if (summary.succeeded === 0) {
+                    message = summary.total === 1
+                        ? "Failed to delete task"
+                        : `Failed to delete all ${summary.total} tasks`;
+                } else {
+                    message = `Deleted ${summary.succeeded}/${summary.total} tasks. ${summary.failed} failed.`;
+                }
 
                 return {
                     content: [
-                        { type: "text", text: `Task deleted successfully!` },
+                        { type: "text", text: message },
                         { type: "text", text: JSON.stringify(output) },
                     ],
-                    structuredContent: output as Record<string, unknown>,
+                    structuredContent: output as unknown as Record<string, unknown>,
+                    isError: summary.failed > 0 && summary.succeeded === 0,
                 };
             } catch (error) {
                 const errorMsg = error instanceof Error ? error.message : String(error);
@@ -68,7 +119,7 @@ export const registerDeleteTask: ToolRegistrationFunction = (server, context) =>
                 }
 
                 return {
-                    content: [{ type: "text", text: `Failed to delete task: ${errorMsg}`, isError: true }],
+                    content: [{ type: "text", text: `Failed to delete task(s): ${errorMsg}`, isError: true }],
                     isError: true,
                 };
             }
