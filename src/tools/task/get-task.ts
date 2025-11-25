@@ -12,7 +12,15 @@ export const registerGetTask: ToolRegistrationFunction = (server, context) => {
         "get_task",
         {
             title: "Get Task",
-            description: "Get detailed information about a specific task in a project. Returns the complete task details.",
+            description: `Get detailed information about a specific task in a project. Returns the complete task details.
+
+RESPONSE FIELDS:
+- content: Task description for TEXT tasks (no sub-tasks)
+- desc: Task description for CHECKLIST tasks (with sub-tasks/items)
+- kind: Task type - "TEXT" (simple task), "CHECKLIST" (task with sub-tasks)
+- items: Sub-task list (only present for CHECKLIST tasks)
+
+NOTE: When creating/updating tasks, use the unified 'description' parameter which auto-maps to the correct field.`,
             inputSchema: {
                 projectId: z.string().describe("Project ID (required)"),
                 taskId: z.string().describe("Task ID (required)"),
@@ -21,8 +29,8 @@ export const registerGetTask: ToolRegistrationFunction = (server, context) => {
                 id: z.string(),
                 projectId: z.string(),
                 title: z.string(),
-                content: z.string().optional(),
-                desc: z.string().optional(),
+                content: z.string().optional().describe("Task description for TEXT tasks"),
+                desc: z.string().optional().describe("Task description for CHECKLIST tasks"),
                 isAllDay: z.boolean().optional(),
                 startDate: z.string().optional(),
                 dueDate: z.string().optional(),

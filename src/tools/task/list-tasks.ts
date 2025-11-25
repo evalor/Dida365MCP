@@ -189,6 +189,13 @@ LIMITS:
 
 ⚠️ IMPORTANT: Only returns UNCOMPLETED tasks (status=0). Completed tasks are not available via API.
 
+RESPONSE TASK FIELDS:
+- content: Task description for TEXT tasks (no sub-tasks)
+- desc: Task description for CHECKLIST tasks (with sub-tasks/items)
+- kind: Task type - "TEXT" (simple task), "CHECKLIST" (task with sub-tasks)
+
+NOTE: When creating/updating tasks, use the unified 'description' parameter which auto-maps to the correct field.
+
 EXAMPLES:
 - Today's tasks: { "preset": "today" }
 - High priority: { "priority": [5] }

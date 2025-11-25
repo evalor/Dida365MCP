@@ -56,7 +56,7 @@ REQUIRED per task:
 
 OPTIONAL per task (only provided fields are updated):
 - title: New task title
-- description: Task description/notes (auto-mapped to correct API field)
+- description: Task description
 - dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
 - startDate: Start date (ISO 8601)
 - priority: 0=none, 1=low, 3=medium, 5=high
