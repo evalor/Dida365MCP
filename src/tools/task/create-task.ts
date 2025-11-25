@@ -71,6 +71,8 @@ BEHAVIOR:
 - Check summary.failed > 0 for failures
 - Use failedItems array to retry failed tasks
 
+⚠️ NOTE: When using "inbox" as projectId, the returned task will have a projectId like "inbox{userId}" (e.g., "inbox1023997016"). Use this actual projectId for subsequent operations (update/complete/delete).
+
 EXAMPLE (single):
 { "tasks": [{ "title": "Buy milk", "projectId": "inbox" }] }
 
