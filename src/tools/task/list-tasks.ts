@@ -186,7 +186,7 @@ WHEN NOT TO USE:
 
 QUICK FILTERS (preset):
 - "today": Tasks due today
-- "tomorrow": Tasks due tomorrow  
+- "tomorrow": Tasks due tomorrow
 - "thisWeek": Tasks due this week
 - "overdue": Past-due tasks
 
