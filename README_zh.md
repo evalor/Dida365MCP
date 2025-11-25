@@ -287,7 +287,7 @@ npm run debug:hot  # 使用 tsx watch 运行（实验性）
 
 ## 🛠️ 可用的 MCP 工具
 
-此服务器提供 **14 个 MCP 工具**，分为三类，✔️ 100% 实现了开放平台文档中描述的所有 API 接口。
+此服务器提供 **15 个 MCP 工具**，分为三类，✔️ 100% 实现了开放平台文档中描述的所有 API 接口。
 
 | 类别       | 工具名称            | 描述                                 | 必需参数              |
 | ---------- | ------------------- | ------------------------------------ | --------------------- |
@@ -300,13 +300,14 @@ npm run debug:hot  # 使用 tsx watch 运行（实验性）
 |            | `create_project`    | 创建新项目                           | `name`                |
 |            | `update_project`    | 更新现有项目                         | `projectId`           |
 |            | `delete_project`    | 删除项目（⚠️ 不可逆）                 | `projectId`           |
-| **任务**   | `create_task`       | 创建新任务（支持子任务、提醒、重复） | `title`, `projectId`  |
+| **任务**   | `list_tasks`        | 列出任务（支持跨项目批量查询和过滤） | -                     |
+|            | `create_task`       | 创建任务（支持批量创建和子任务）     | `tasks[]`             |
 |            | `get_task`          | 获取任务详细信息                     | `projectId`, `taskId` |
-|            | `update_task`       | 更新现有任务                         | `taskId`, `projectId` |
-|            | `delete_task`       | 删除任务（⚠️ 不可逆）                 | `projectId`, `taskId` |
-|            | `complete_task`     | 标记任务为已完成                     | `projectId`, `taskId` |
+|            | `update_task`       | 更新任务（支持批量更新）             | `tasks[]`             |
+|            | `delete_task`       | 删除任务（⚠️ 不可逆，支持批量）       | `tasks[]`             |
+|            | `complete_task`     | 标记任务为已完成（支持批量）         | `tasks[]`             |
 
-> **注意**：在只读模式下，仅可用读取操作（`get_auth_url`、`check_auth_status`、`revoke_auth`、`list_projects`、`get_project`、`get_project_data`、`get_task`）。所有写入/删除操作均被禁用以确保安全。
+> **注意**：在只读模式下，仅可用读取操作（`get_auth_url`、`check_auth_status`、`revoke_auth`、`list_projects`、`get_project`、`get_project_data`、`list_tasks`、`get_task`）。所有写入/删除操作均被禁用以确保安全。
 
 ## 📁 项目结构
 
@@ -317,10 +318,12 @@ src/
 ├── oauth-server.ts       # 本地回调服务器
 ├── config.ts             # 配置管理
 ├── token.ts              # 令牌持久化
-└── tools/                # MCP 工具（14 个）
+├── utils/                # 工具模块
+│   └── batch.ts          # 批量执行工具
+└── tools/                # MCP 工具（15 个）
     ├── auth/             # OAuth 工具（3 个）
     ├── project/          # 项目管理（6 个）
-    └── task/             # 任务管理（5 个）
+    └── task/             # 任务管理（6 个）
 ```
 
 ## 🗺️ 路线图
@@ -332,12 +335,13 @@ src/
 - [x] 完整的项目管理（CRUD）
 - [x] 完整的任务管理（子任务、提醒、重复）
 - [x] 针对 AI 代理的只读模式
+- [x] 批量操作支持（批量创建/更新/删除/完成任务）
+- [x] 任务列表查询（跨项目查询、日期/优先级过滤）
+- [x] 收集箱任务操作支持
 
 ### 🚀 下一步计划
 
-- [ ] 批量操作支持（创建/更新/删除多个任务）
 - [ ] 优化工具描述，增强 LLM 集成
-- [ ] 收集箱任务操作支持
 - [ ] 添加参数以限制MCP可访问的ProjectId
 
 ### 💡 未来展望
