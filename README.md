@@ -58,7 +58,8 @@ Add the following configuration to your MCP client (Claude Desktop, VS Code, etc
       ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id_here",
-        "DIDA365_CLIENT_SECRET": "your_client_secret_here"
+        "DIDA365_CLIENT_SECRET": "your_client_secret_here",
+        "DIDA365_REGION": "china"
       }
     }
   }
@@ -123,10 +124,20 @@ Add these credentials to the MCP client configuration:
 {
   "env": {
     "DIDA365_CLIENT_ID": "your_client_id_here",
-    "DIDA365_CLIENT_SECRET": "your_client_secret_here"
+    "DIDA365_CLIENT_SECRET": "your_client_secret_here",
+    "DIDA365_REGION": "china"
   }
 }
 ```
+
+### Region Configuration
+
+This server supports both TickTick international and Dida365 Chinese versions:
+
+- **China Region** (`DIDA365_REGION=china`): Default, uses `dida365.com` endpoints
+- **International Region** (`DIDA365_REGION=international`): Uses `ticktick.com` endpoints
+
+⚠️ **Important**: Tokens are region-specific. Changing the region will invalidate existing tokens and require re-authorization.
 
 See the [Quick Start](#-quick-start) section for complete configuration examples.
 
@@ -159,6 +170,7 @@ Create a `.env` file in the project root:
 ```text
 DIDA365_CLIENT_ID=your_client_id_here
 DIDA365_CLIENT_SECRET=your_client_secret_here
+DIDA365_REGION=china  # or 'international' for TickTick
 ```
 
 3. **Build and run**
@@ -179,7 +191,8 @@ Point your MCP client to the built `index.js` file:
       "args": ["/absolute/path/to/Dida365MCP/build/index.js"],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
-        "DIDA365_CLIENT_SECRET": "your_client_secret"
+        "DIDA365_CLIENT_SECRET": "your_client_secret",
+        "DIDA365_REGION": "china"
       }
     }
   }
@@ -192,10 +205,12 @@ Point your MCP client to the built `index.js` file:
 
 ```bash
 npm run build      # Compile TypeScript
-npm run watch      # Watch mode
+npm run watch      # Watch mode (auto-compile on changes)
 npm run dev        # Compile and run
 npm start          # Production run
-npm run debug      # Debug with MCP Inspector
+npm run debug      # Debug with MCP Inspector (one-time)
+npm run debug:watch # Debug with hot reload (auto-restart on changes)
+npm run debug:hot  # Run with tsx watch (experimental)
 ```
 
 ### Security & Best Practices
@@ -223,7 +238,8 @@ For AI agents that may run in YOLO mode, you can enable read-only mode by adding
       ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
-        "DIDA365_CLIENT_SECRET": "your_client_secret"
+        "DIDA365_CLIENT_SECRET": "your_client_secret",
+        "DIDA365_REGION": "china"
       }
     }
   }
@@ -242,7 +258,8 @@ For AI agents that may run in YOLO mode, you can enable read-only mode by adding
       ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
-        "DIDA365_CLIENT_SECRET": "your_client_secret"
+        "DIDA365_CLIENT_SECRET": "your_client_secret",
+        "DIDA365_REGION": "china"
       }
     }
   }

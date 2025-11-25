@@ -59,7 +59,8 @@
       ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id_here",
-        "DIDA365_CLIENT_SECRET": "your_client_secret_here"
+        "DIDA365_CLIENT_SECRET": "your_client_secret_here",
+        "DIDA365_REGION": "china"
       }
     }
   }
@@ -124,10 +125,20 @@
 {
   "env": {
     "DIDA365_CLIENT_ID": "your_client_id_here",
-    "DIDA365_CLIENT_SECRET": "your_client_secret_here"
+    "DIDA365_CLIENT_SECRET": "your_client_secret_here",
+    "DIDA365_REGION": "china"
   }
 }
 ```
+
+### 区域配置
+
+此服务器支持 TickTick 国际版和 Dida365 国内版：
+
+- **中国区域** (`DIDA365_REGION=china`)：默认，使用 `dida365.com` 端点
+- **国际区域** (`DIDA365_REGION=international`)：使用 `ticktick.com` 端点
+
+⚠️ **重要**：Token 是区域特定的。更改区域将使现有 Token 失效，需要重新授权。
 
 完整的配置示例请参见 [快速开始](#-快速开始) 章节。
 
@@ -160,6 +171,7 @@ npm install
 ```text
 DIDA365_CLIENT_ID=your_client_id_here
 DIDA365_CLIENT_SECRET=your_client_secret_here
+DIDA365_REGION=china  # 或 'international' 用于 TickTick
 ```
 
 3. **构建并运行**
@@ -180,7 +192,8 @@ npm run dev
       "args": ["/absolute/path/to/Dida365MCP/build/index.js"],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
-        "DIDA365_CLIENT_SECRET": "your_client_secret"
+        "DIDA365_CLIENT_SECRET": "your_client_secret",
+        "DIDA365_REGION": "china"
       }
     }
   }
@@ -193,10 +206,12 @@ npm run dev
 
 ```bash
 npm run build      # 编译 TypeScript
-npm run watch      # 监听模式
+npm run watch      # 监听模式（自动编译变更）
 npm run dev        # 编译并运行
 npm start          # 生产环境运行
-npm run debug      # 使用 MCP Inspector 调试
+npm run debug      # 使用 MCP Inspector 调试（一次性）
+npm run debug:watch # 带热重载的调试（变更时自动重启）
+npm run debug:hot  # 使用 tsx watch 运行（实验性）
 ```
 
 ### 安全与最佳实践
@@ -224,7 +239,8 @@ npm run debug      # 使用 MCP Inspector 调试
       ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
-        "DIDA365_CLIENT_SECRET": "your_client_secret"
+        "DIDA365_CLIENT_SECRET": "your_client_secret",
+        "DIDA365_REGION": "china"
       }
     }
   }
@@ -243,7 +259,8 @@ npm run debug      # 使用 MCP Inspector 调试
       ],
       "env": {
         "DIDA365_CLIENT_ID": "your_client_id",
-        "DIDA365_CLIENT_SECRET": "your_client_secret"
+        "DIDA365_CLIENT_SECRET": "your_client_secret",
+        "DIDA365_REGION": "china"
       }
     }
   }

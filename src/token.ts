@@ -1,7 +1,7 @@
 /**
  * Token Management Module
  * 
- * Responsible for OAuth2 Token storage, loading, refreshing and validation
+ * Responsible for OAuth2 Token storage, loading and validation
  */
 
 import * as fs from 'fs';
@@ -15,7 +15,6 @@ import { sha256 } from './utils/hash.js';
  */
 export interface TokenData {
     access_token: string;
-    refresh_token: string;
     expires_at: number;  // Unix timestamp (ms)
     created_at: number;  // Unix timestamp (ms)
     scope: string;
@@ -23,6 +22,39 @@ export interface TokenData {
     // Client credential metadata (for validation)
     clientId?: string;
     clientSecretHash?: string;
+    // Region information (for cross-region validation)
+    region?: string;
+}
+
+/**
+ * Token validation context
+ * Encapsulates all parameters needed for token validation to avoid redundant parameter passing
+ */
+export interface TokenValidationContext {
+    clientId: string;
+    clientSecretHash: string;  // Pre-computed hash to avoid repeated SHA256 calculations
+    region: string;
+}
+
+/**
+ * Create a token validation context from raw credentials
+ * Pre-computes the clientSecretHash to optimize repeated validations
+ * 
+ * @param {string} clientId - OAuth Client ID
+ * @param {string} clientSecret - OAuth Client Secret (will be hashed)
+ * @param {string} region - Region identifier
+ * @returns {TokenValidationContext} Validation context with pre-computed hash
+ */
+export function createValidationContext(
+    clientId: string,
+    clientSecret: string,
+    region: string
+): TokenValidationContext {
+    return {
+        clientId,
+        clientSecretHash: sha256(clientSecret),
+        region,
+    };
 }
 
 /**
@@ -68,7 +100,7 @@ export function loadToken(): TokenData | null {
         const data = fs.readFileSync(TOKEN_FILE, 'utf-8');
         const tokenData = JSON.parse(data) as TokenData;
 
-        // Validate required fields (refresh_token is optional, some OAuth implementations don't return it)
+        // Validate required fields
         if (!tokenData.access_token || !tokenData.expires_at) {
             console.error('Invalid token file: missing required fields (access_token or expires_at)');
             return null;
@@ -108,13 +140,13 @@ export function isTokenExpired(tokenData: TokenData, bufferSeconds: number = 300
  * 
  * @param {TokenData} tokenData - Token data to validate
  * @param {string} clientId - Current OAuth Client ID
- * @param {string} clientSecret - Current OAuth Client Secret
+ * @param {string} clientSecretHash - Pre-computed hash of OAuth Client Secret
  * @returns {boolean} Whether token belongs to the current client
  */
 export function validateTokenCredentials(
     tokenData: TokenData,
     clientId: string,
-    clientSecret: string
+    clientSecretHash: string
 ): boolean {
     // If token doesn't have client metadata, treat as invalid (legacy token)
     if (!tokenData.clientId || !tokenData.clientSecretHash) {
@@ -126,9 +158,8 @@ export function validateTokenCredentials(
         return false;
     }
 
-    // Validate client secret hash matches
-    const currentSecretHash = sha256(clientSecret);
-    if (tokenData.clientSecretHash !== currentSecretHash) {
+    // Validate client secret hash matches (no need to compute, use pre-computed hash)
+    if (tokenData.clientSecretHash !== clientSecretHash) {
         return false;
     }
 
@@ -136,116 +167,116 @@ export function validateTokenCredentials(
 }
 
 /**
- * Refresh Access Token
+ * Validate if token belongs to the current region
  * 
- * @param {string} refreshToken - Refresh Token
- * @param {string} clientId - OAuth Client ID
- * @param {string} clientSecret - OAuth Client Secret
- * @returns {Promise<TokenData>} New Token data
+ * @param {TokenData} tokenData - Token data to validate
+ * @param {string} region - Current region
+ * @returns {boolean} Whether token belongs to the current region
  */
-export async function refreshAccessToken(
-    refreshToken: string,
-    clientId: string,
-    clientSecret: string
-): Promise<TokenData> {
-    const tokenEndpoint = APP_CONFIG.OAUTH.TOKEN_ENDPOINT;
-
-    const params = new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-        client_id: clientId,
-        client_secret: clientSecret,
-    });
-
-    const response = await fetch(tokenEndpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params.toString(),
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Token refresh failed: ${response.status} ${errorText}`);
+export function validateTokenRegion(tokenData: TokenData, region: string): boolean {
+    // If token doesn't have region metadata, treat as invalid (legacy token)
+    if (!tokenData.region) {
+        return false;
     }
 
-    const data = await response.json() as any;
+    // Validate region matches
+    return tokenData.region === region;
+}
 
-    // Construct new Token data with client credentials metadata
-    const newTokenData: TokenData = {
-        access_token: data.access_token,
-        refresh_token: data.refresh_token || refreshToken, // Some implementations don't return new refresh_token
-        expires_at: Date.now() + (data.expires_in * 1000),
-        created_at: Date.now(),
-        scope: data.scope || APP_CONFIG.OAUTH.SCOPE,
-        token_type: data.token_type,
-        clientId: clientId,
-        clientSecretHash: sha256(clientSecret),
-    };
-
-    // Auto-save new Token
-    saveToken(newTokenData);
-
-    return newTokenData;
+/**
+ * Validate token against a validation context
+ * Combines credentials and region validation in a single call
+ * 
+ * @param {TokenData} tokenData - Token data to validate
+ * @param {TokenValidationContext} context - Validation context with pre-computed values
+ * @returns {boolean} Whether token is valid for the current context
+ */
+export function validateToken(tokenData: TokenData, context: TokenValidationContext): boolean {
+    return validateTokenCredentials(tokenData, context.clientId, context.clientSecretHash) &&
+        validateTokenRegion(tokenData, context.region);
 }
 
 /**
  * Token Manager class
+ * 
+ * This implementation does not cache tokens in memory.
+ * All reads are directly from the file system to avoid synchronization issues
+ * between multiple TokenManager instances.
+ * 
+ * Uses TokenValidationContext to pre-compute clientSecretHash, avoiding
+ * repeated SHA256 calculations during token validation.
  */
 export class TokenManager {
-    private tokenData: TokenData | null = null;
-    private clientId: string;
-    private clientSecret: string;
+    private validationContext: TokenValidationContext;
 
-    constructor(clientId: string, clientSecret: string) {
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
+    /**
+     * Create a TokenManager instance
+     * 
+     * @param {TokenValidationContext} context - Pre-computed validation context
+     */
+    constructor(context: TokenValidationContext) {
+        this.validationContext = context;
 
-        // Try to load saved Token on startup
+        // Validate and clean up invalid token on startup
+        this.validateStoredToken();
+    }
+
+    /**
+     * Validate stored token on startup
+     * Deletes the token file if it's invalid (wrong credentials or region)
+     */
+    private validateStoredToken(): void {
         const loadedToken = loadToken();
-        
+
         if (loadedToken) {
-            // Validate that token belongs to current client credentials
-            if (validateTokenCredentials(loadedToken, clientId, clientSecret)) {
-                this.tokenData = loadedToken;
-            } else {
+            // Validate that token belongs to current client credentials and region
+            if (!validateToken(loadedToken, this.validationContext)) {
                 // Delete the invalid token to avoid confusion
                 deleteToken();
-                this.tokenData = null;
+                console.error('Stored token is invalid (credentials or region mismatch), deleted');
             }
         }
     }
 
     /**
-     * Get valid Access Token (auto-refresh)
+     * Load and validate token from file
+     * 
+     * @returns {TokenData | null} Valid token data, or null if not available
+     */
+    private loadValidToken(): TokenData | null {
+        const tokenData = loadToken();
+
+        if (!tokenData) {
+            return null;
+        }
+
+        // Validate using pre-computed context (no repeated hash calculation)
+        if (!validateToken(tokenData, this.validationContext)) {
+            return null;
+        }
+
+        return tokenData;
+    }
+
+    /**
+     * Get valid Access Token
      * 
      * @returns {Promise<string>} Valid Access Token
-     * @throws {Error} If no token available or refresh fails
+     * @throws {Error} If no token available or token is expired
      */
     async getValidToken(): Promise<string> {
-        if (!this.tokenData) {
+        const tokenData = this.loadValidToken();
+
+        if (!tokenData) {
             throw new Error('No token available. Please authorize first.');
         }
 
         // Check if expired
-        if (isTokenExpired(this.tokenData)) {
-            console.error('Token expired, attempting to refresh...');
-
-            // If refresh_token exists, try to refresh
-            if (this.tokenData.refresh_token) {
-                this.tokenData = await refreshAccessToken(
-                    this.tokenData.refresh_token,
-                    this.clientId,
-                    this.clientSecret
-                );
-            } else {
-                // No refresh_token, cannot refresh
-                throw new Error('Token expired and no refresh_token available. Please re-authorize.');
-            }
+        if (isTokenExpired(tokenData)) {
+            throw new Error('Token expired. Please re-authorize.');
         }
 
-        return this.tokenData.access_token;
+        return tokenData.access_token;
     }
 
     /**
@@ -254,7 +285,6 @@ export class TokenManager {
      * @param {TokenData} tokenData - Token data
      */
     setToken(tokenData: TokenData): void {
-        this.tokenData = tokenData;
         saveToken(tokenData);
     }
 
@@ -264,7 +294,7 @@ export class TokenManager {
      * @returns {boolean} Whether token exists
      */
     hasToken(): boolean {
-        return this.tokenData !== null;
+        return this.loadValidToken() !== null;
     }
 
     /**
@@ -273,27 +303,19 @@ export class TokenManager {
      * @returns {boolean} Whether token is valid
      */
     isTokenValid(): boolean {
-        if (!this.tokenData) {
+        const tokenData = this.loadValidToken();
+
+        if (!tokenData) {
             return false;
         }
 
-        return !isTokenExpired(this.tokenData);
+        return !isTokenExpired(tokenData);
     }
 
     /**
      * Clear Token
      */
     clearToken(): void {
-        this.tokenData = null;
         deleteToken();
-    }
-
-    /**
-     * Get current Token data (for debugging)
-     * 
-     * @returns {TokenData | null} Token data
-     */
-    getTokenData(): TokenData | null {
-        return this.tokenData;
     }
 }

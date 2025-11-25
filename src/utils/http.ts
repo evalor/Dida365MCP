@@ -5,9 +5,8 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
-import { TokenManager } from '../token.js';
-import { loadOAuthConfig } from '../config.js';
-import { APP_CONFIG } from '../config.js';
+import { TokenManager, createValidationContext } from '../token.js';
+import { loadOAuthConfig, APP_CONFIG } from '../config.js';
 
 /**
  * HTTP Client configuration
@@ -247,7 +246,12 @@ export class HttpClient {
 
 
 const oauthConfig = loadOAuthConfig();
-const defaultTokenManager = new TokenManager(oauthConfig.clientId, oauthConfig.clientSecret);
+const validationContext = createValidationContext(
+    oauthConfig.clientId,
+    oauthConfig.clientSecret,
+    APP_CONFIG.REGION
+);
+const defaultTokenManager = new TokenManager(validationContext);
 const defaultHttpClient = new HttpClient({ tokenManager: defaultTokenManager });
 
 export default defaultHttpClient;

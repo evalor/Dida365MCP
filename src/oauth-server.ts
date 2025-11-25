@@ -282,13 +282,6 @@ export class OAuthCallbackServer {
         this.resolveCallback = null;
         this.rejectCallback = null;
     }
-
-    /**
-     * Check if server is running
-     */
-    isRunning(): boolean {
-        return this.server !== null;
-    }
 }
 
 /**

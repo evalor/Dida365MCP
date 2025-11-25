@@ -6,13 +6,15 @@
 
 import * as crypto from 'crypto';
 import { OAuth2Config, APP_CONFIG } from './config.js';
-import { TokenManager, TokenData } from './token.js';
+import { TokenManager, TokenData, createValidationContext, type TokenValidationContext } from './token.js';
 import { OAuthCallbackServer } from './oauth-server.js';
 import { AuthStateManager, AuthState } from './auth-state.js';
-import { sha256 } from './utils/hash.js';
 
 /**
  * OAuth Manager
+ * 
+ * Manages OAuth2 authorization flow and token lifecycle.
+ * Uses TokenValidationContext for efficient token validation without redundant hash calculations.
  */
 export class OAuthManager {
     private config: OAuth2Config;
@@ -20,10 +22,25 @@ export class OAuthManager {
     private stateManager: AuthStateManager;
     private callbackServer: OAuthCallbackServer | null = null;
     private currentState: string | null = null;
+    private validationContext: TokenValidationContext;
 
+    /**
+     * Create an OAuthManager instance
+     * 
+     * @param {OAuth2Config} config - OAuth2 configuration (clientId, clientSecret, endpoints)
+     * 
+     * Note: Region is obtained from APP_CONFIG.REGION instead of being passed as a parameter,
+     * as it's a global configuration that doesn't change during runtime.
+     */
     constructor(config: OAuth2Config) {
         this.config = config;
-        this.tokenManager = new TokenManager(config.clientId, config.clientSecret);
+        // Create validation context once, pre-computing the clientSecretHash
+        this.validationContext = createValidationContext(
+            config.clientId,
+            config.clientSecret,
+            APP_CONFIG.REGION
+        );
+        this.tokenManager = new TokenManager(this.validationContext);
         this.stateManager = new AuthStateManager();
 
         // Check if there's a valid Token on startup
@@ -31,7 +48,7 @@ export class OAuthManager {
             this.stateManager.setAuthorized();
             console.error('Found valid token on startup');
         } else if (this.tokenManager.hasToken()) {
-            console.error('Found expired token on startup, need to refresh or re-authorize');
+            console.error('Found expired token on startup, need to re-authorize');
         } else {
             console.error('No token found on startup, authorization required');
         }
@@ -138,13 +155,13 @@ export class OAuthManager {
         // Construct Token data with client credentials metadata
         const tokenData: TokenData = {
             access_token: data.access_token,
-            refresh_token: data.refresh_token,
             expires_at: Date.now() + (data.expires_in * 1000),
             created_at: Date.now(),
             scope: data.scope || this.config.scope,
             token_type: data.token_type,
             clientId: this.config.clientId,
-            clientSecretHash: sha256(this.config.clientSecret),
+            clientSecretHash: this.validationContext.clientSecretHash,
+            region: this.validationContext.region,
         };
 
         return tokenData;
@@ -160,7 +177,7 @@ export class OAuthManager {
     }
 
     /**
-     * Get valid Access Token (auto-refresh)
+     * Get valid Access Token
      * 
      * @returns {Promise<string>} Valid Access Token
      */
@@ -188,9 +205,25 @@ export class OAuthManager {
     /**
      * Check authorization status
      * 
+     * Performs real-time validation of token status by checking the file system,
+     * not just the in-memory state. This ensures accurate status even if the
+     * token file was manually deleted or modified.
+     * 
      * @returns {AuthStateInfo} Status information
      */
     getAuthStatus() {
+        // Sync state with actual token status
+        // This handles cases where token file was deleted externally
+        if (this.stateManager.isAuthorized()) {
+            if (!this.tokenManager.hasToken()) {
+                // Token file was deleted, update state
+                this.stateManager.setNotAuthorized();
+            } else if (!this.tokenManager.isTokenValid()) {
+                // Token exists but is expired
+                this.stateManager.setExpired();
+            }
+        }
+
         return this.stateManager.getStateInfo();
     }
 
@@ -208,20 +241,6 @@ export class OAuthManager {
         }
 
         console.error('Authorization revoked, token cleared');
-    }
-
-    /**
-     * Get Token manager (for external use)
-     */
-    getTokenManager(): TokenManager {
-        return this.tokenManager;
-    }
-
-    /**
-     * Get state manager (for external use)
-     */
-    getStateManager(): AuthStateManager {
-        return this.stateManager;
     }
 
     /**
