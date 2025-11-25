@@ -62,8 +62,21 @@ export class OAuthManager {
      */
     async getAuthorizationUrl(): Promise<string> {
         // If authorization is already in progress, return existing URL (idempotent)
-        if (this.stateManager.isPending() && this.currentAuthUrl) {
+        // Verify both URL and state exist to ensure valid pending state
+        if (this.stateManager.isPending() && this.currentAuthUrl && this.currentState) {
             return this.currentAuthUrl;
+        }
+
+        // If we reach here during PENDING state, it means we have an inconsistent state
+        // (e.g., currentAuthUrl or currentState is missing). Clean up before proceeding.
+        if (this.stateManager.isPending()) {
+            console.error('Inconsistent authorization state detected, cleaning up...');
+            if (this.callbackServer) {
+                this.callbackServer.close();
+                this.callbackServer = null;
+            }
+            this.currentState = null;
+            this.currentAuthUrl = null;
         }
 
         // Generate random state (prevent CSRF)
