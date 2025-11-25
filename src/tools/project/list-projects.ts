@@ -12,7 +12,16 @@ export const registerListProjects: ToolRegistrationFunction = (server, context) 
         "list_projects",
         {
             title: "List Projects",
-            description: "Get all projects for the current user. Returns a list of all projects with their details including name, color, view mode, permissions, and status.",
+            description: `Retrieve all projects (folders/lists) for the current user.
+
+WHEN TO USE:
+- Get an overview of all projects
+- Find a project ID before operating on tasks
+- Check project names, colors, and view modes
+
+RETURNS: Project list with id, name, color, viewMode, permissions, kind (TASK/NOTE).
+
+💡 TIP: After getting the project list, use 'list_tasks' with projectId to get tasks, or 'get_project_data' for complete project data including tasks.`,
             inputSchema: {},
             outputSchema: {
                 projects: z.array(z.object({

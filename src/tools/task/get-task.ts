@@ -12,15 +12,26 @@ export const registerGetTask: ToolRegistrationFunction = (server, context) => {
         "get_task",
         {
             title: "Get Task",
-            description: `Get detailed information about a specific task in a project. Returns the complete task details.
+            description: `Retrieve detailed information about a specific task.
+
+WHEN TO USE:
+- View complete task details (title, description, dates, priority)
+- Check task status before updating or completing
+- Verify a task exists
+
+WHEN NOT TO USE:
+- List multiple tasks → use 'list_tasks'
+- Get all tasks in a project → use 'get_project_data' or 'list_tasks'
+
+REQUIRED: projectId, taskId
 
 RESPONSE FIELDS:
-- content: Task description for TEXT tasks (no sub-tasks)
-- desc: Task description for CHECKLIST tasks (with sub-tasks/items)
-- kind: Task type - "TEXT" (simple task), "CHECKLIST" (task with sub-tasks)
-- items: Sub-task list (only present for CHECKLIST tasks)
+- content: Description for TEXT tasks (no sub-tasks)
+- desc: Description for CHECKLIST tasks (with sub-tasks)
+- kind: "TEXT" or "CHECKLIST"
+- items: Sub-task list (CHECKLIST only)
 
-NOTE: When creating/updating tasks, use the unified 'description' parameter which auto-maps to the correct field.`,
+NOTE: When creating/updating, use unified 'description' parameter which auto-maps to the correct field.`,
             inputSchema: {
                 projectId: z.string().describe("Project ID (required)"),
                 taskId: z.string().describe("Task ID (required)"),

@@ -12,13 +12,18 @@ export const registerGetProject: ToolRegistrationFunction = (server, context) =>
         "get_project",
         {
             title: "Get Project",
-            description: `Get detailed information about a specific project by its ID.
+            description: `Retrieve metadata for a single project by ID.
 
-Returns project details including name, color, view mode, permissions, and status.
+WHEN TO USE:
+- Check project settings (name, color, viewMode, permissions)
+- Verify a project exists before operations
+- Get project metadata without loading tasks
 
-💡 TIP: This tool returns project metadata only, NOT tasks.
-- For tasks, use 'get_project_data' or 'list_tasks'
-- For filtering tasks by date/priority, use 'list_tasks'`,
+WHEN NOT TO USE:
+- Need tasks within the project → use 'get_project_data' or 'list_tasks'
+- Need to filter tasks by date/priority → use 'list_tasks'
+
+RETURNS: Project metadata only (id, name, color, viewMode, kind, permissions). Does NOT include tasks.`,
             inputSchema: {
                 projectId: z.string().describe("The unique ID of the project to retrieve"),
             },

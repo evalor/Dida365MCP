@@ -12,7 +12,21 @@ export const registerCreateProject: ToolRegistrationFunction = (server, context)
         "create_project",
         {
             title: "Create Project",
-            description: "Create a new project with the specified name and optional configuration. Returns the created project details including the generated project ID.",
+            description: `Create a new project (folder/list) for organizing tasks.
+
+WHEN TO USE:
+- User wants to create a new task list, folder, or project
+- Organizing tasks into categories or areas
+
+REQUIRED: name (project title)
+
+OPTIONAL:
+- color: Hex color code (e.g., '#F18181')
+- viewMode: 'list' (default), 'kanban', or 'timeline'
+- kind: 'TASK' (default) for tasks, 'NOTE' for notes
+- sortOrder: Position in project list
+
+RETURNS: Created project with generated ID. Use this ID for subsequent task operations.`,
             inputSchema: {
                 name: z.string().describe("The name of the project (required)"),
                 color: z.string().optional().describe("Project color in hex format (e.g., '#F18181'). Optional."),

@@ -44,49 +44,33 @@ export const registerCreateTask: ToolRegistrationFunction = (server, context) =>
         "create_task",
         {
             title: "Create Task(s)",
-            description: `Create one or more tasks in projects. Supports batch creation.
+            description: `Create one or more tasks in a project. Supports batch creation.
 
-INPUT FORMAT:
-{ "tasks": [{ "title": "Task 1", "projectId": "xxx" }, ...] }
+WHEN TO USE:
+- Add new tasks to a project or inbox
+- Create tasks with due dates, priorities, reminders
+- Create tasks with sub-tasks (checklist items)
 
-REQUIRED per task:
-- title: Task title (non-empty string)
-- projectId: Project ID or "inbox" for inbox tasks
+REQUIRED (per task):
+- title: Task name
+- projectId: Target project ID, or "inbox" for inbox
 
-OPTIONAL per task:
-- description: Task description
-- dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
-- startDate: Start date (ISO 8601)
+OPTIONAL (per task):
+- description: Task notes (auto-maps to correct field)
+- dueDate: ISO 8601 format (e.g., "2025-11-25T17:00:00+0800")
+- startDate: ISO 8601 format
 - priority: 0=none, 1=low, 3=medium, 5=high
 - isAllDay: true for all-day tasks
-- timeZone: e.g. "America/Los_Angeles"
+- timeZone: e.g., "America/Los_Angeles"
 - reminders: ["TRIGGER:PT0S"] (at due time), ["TRIGGER:-PT30M"] (30min before)
-- repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for daily repeat
-- items: Sub-tasks array [{title, status: 0|1}]. When provided, task becomes CHECKLIST type.
+- repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for recurring tasks
+- items: Sub-task array [{title, status: 0|1}] - creates CHECKLIST type
 
-BEHAVIOR:
-- NOT atomic: Some tasks may succeed while others fail
-- Check summary.failed > 0 for failures
-- Use failedItems array to retry failed tasks
+INPUT FORMAT: { "tasks": [{ "title": "...", "projectId": "..." }, ...] }
 
-⚠️ NOTE: When using "inbox" as projectId, the returned task will have a projectId like "inbox{userId}" (e.g., "inbox1023997016"). Use this actual projectId for subsequent operations (update/complete/delete).
+⚠️ INBOX NOTE: When using "inbox", returned tasks have projectId like "inbox1023997016". Use this actual ID for update/delete/complete operations.
 
-EXAMPLE (single):
-{ "tasks": [{ "title": "Buy milk", "projectId": "inbox" }] }
-
-EXAMPLE (batch):
-{ "tasks": [
-  { "title": "Buy milk", "projectId": "inbox", "priority": 3 },
-  { "title": "Call mom", "projectId": "xxx", "dueDate": "2025-11-25T18:00:00+0800" }
-]}
-
-EXAMPLE (with sub-tasks):
-{ "tasks": [{ 
-  "title": "Project Plan", 
-  "projectId": "xxx", 
-  "description": "Main project description",
-  "items": [{"title": "Step 1", "status": 0}, {"title": "Step 2", "status": 0}]
-}]}`,
+BATCH BEHAVIOR: Non-atomic - some may succeed while others fail. Check summary.failed > 0 for failures.`,
             inputSchema: {
                 tasks: z.array(TaskInputSchema).min(1).describe("Array of tasks to create"),
             },

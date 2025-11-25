@@ -12,7 +12,23 @@ export const registerUpdateProject: ToolRegistrationFunction = (server, context)
         "update_project",
         {
             title: "Update Project",
-            description: "Update an existing project's information such as name, color, view mode, etc. Only provide the fields you want to update; other fields will remain unchanged.",
+            description: `Update an existing project's settings.
+
+WHEN TO USE:
+- Rename a project
+- Change project color, view mode, or type
+- Reorder projects in the list
+
+PARTIAL UPDATE: Only provide fields you want to change. Unspecified fields remain unchanged.
+
+REQUIRED: projectId
+
+OPTIONAL (at least one required):
+- name: New project name
+- color: New hex color (e.g., '#F18181')
+- viewMode: 'list', 'kanban', or 'timeline'
+- kind: 'TASK' or 'NOTE'
+- sortOrder: New position in project list`,
             inputSchema: {
                 projectId: z.string().describe("The unique ID of the project to update (required)"),
                 name: z.string().optional().describe("New project name. Optional."),
