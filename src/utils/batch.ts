@@ -183,7 +183,6 @@ export function formatBatchResults<T, R>(
  * Format batch results for complete/delete operations (no task object returned)
  *
  * @param results - Raw batch execution results
- * @param getIds - Function to extract taskId and projectId from input
  * @returns Formatted response with summary, results, and failed items
  */
 export function formatBatchResultsSimple<
