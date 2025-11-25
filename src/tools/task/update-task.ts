@@ -25,8 +25,7 @@ const TaskUpdateSchema = z.object({
     taskId: z.string().describe("Task ID (required)"),
     projectId: z.string().describe("Project ID (required)"),
     title: z.string().optional().describe("Task title (optional)"),
-    content: z.string().optional().describe("Task content/notes for TEXT tasks (ignored for CHECKLIST)"),
-    desc: z.string().optional().describe("Description for CHECKLIST tasks with items"),
+    description: z.string().optional().describe("Task description/notes. Auto-mapped: to 'content' for TEXT tasks, to 'desc' for CHECKLIST tasks (with items)"),
     isAllDay: z.boolean().optional().describe("Is all-day task (optional)"),
     startDate: z.string().optional().describe("Start time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
     dueDate: z.string().optional().describe("Due time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
@@ -35,7 +34,7 @@ const TaskUpdateSchema = z.object({
     repeatFlag: z.string().optional().describe("Repeat rule (optional)"),
     priority: z.number().optional().describe("Priority: 0=none, 1=low, 3=medium, 5=high (optional)"),
     sortOrder: z.number().optional().describe("Sort order number (optional)"),
-    items: z.array(ChecklistItemSchema).optional().describe("Sub-task list (optional)"),
+    items: z.array(ChecklistItemSchema).optional().describe("Sub-task list. When provided, task becomes CHECKLIST type"),
 });
 
 // Task update type
@@ -57,8 +56,7 @@ REQUIRED per task:
 
 OPTIONAL per task (only provided fields are updated):
 - title: New task title
-- content: Task content/notes (for TEXT tasks only, ignored for CHECKLIST)
-- desc: Description of checklist (for CHECKLIST tasks with items)
+- description: Task description/notes (auto-mapped to correct API field)
 - dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
 - startDate: Start date (ISO 8601)
 - priority: 0=none, 1=low, 3=medium, 5=high
@@ -66,11 +64,7 @@ OPTIONAL per task (only provided fields are updated):
 - timeZone: e.g. "America/Los_Angeles"
 - reminders: ["TRIGGER:PT0S"] (at due time)
 - repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for daily repeat
-- items: Sub-tasks array [{title, status: 0|1}]
-
-⚠️ IMPORTANT - content vs desc:
-- TEXT task (no items): Use "content" for task notes
-- CHECKLIST task (has items): Use "desc" for description. The "content" field is internally used by API to store checklist data and will NOT be displayed in the client.
+- items: Sub-tasks array [{title, status: 0|1}]. When provided, task becomes CHECKLIST type.
 
 BEHAVIOR:
 - NOT atomic: Some tasks may succeed while others fail
@@ -113,12 +107,21 @@ EXAMPLE (batch):
                 const results = await batchExecute<TaskUpdate, Task>(
                     tasks,
                     async (taskUpdate) => {
+                        // Auto-map description field based on task type:
+                        // - If items exist (CHECKLIST task): use 'desc' field
+                        // - If no items (TEXT task): use 'content' field
+                        const hasItems = taskUpdate.items && taskUpdate.items.length > 0;
+                        const descriptionMapping = taskUpdate.description !== undefined
+                            ? (hasItems
+                                ? { desc: taskUpdate.description }
+                                : { content: taskUpdate.description })
+                            : {};
+
                         const requestData: UpdateTaskRequest = {
                             id: taskUpdate.taskId.trim(),
                             projectId: taskUpdate.projectId.trim(),
                             ...(taskUpdate.title !== undefined && { title: taskUpdate.title }),
-                            ...(taskUpdate.content !== undefined && { content: taskUpdate.content }),
-                            ...(taskUpdate.desc !== undefined && { desc: taskUpdate.desc }),
+                            ...descriptionMapping,
                             ...(taskUpdate.isAllDay !== undefined && { isAllDay: taskUpdate.isAllDay }),
                             ...(taskUpdate.startDate !== undefined && { startDate: taskUpdate.startDate }),
                             ...(taskUpdate.dueDate !== undefined && { dueDate: taskUpdate.dueDate }),
