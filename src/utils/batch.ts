@@ -52,10 +52,33 @@ export interface BatchResponse<T, R> {
         taskId?: string;
         projectId?: string;
         error?: string;
+        errorType?: 'not_found' | 'auth_failed' | 'network' | 'validation' | 'unknown';
+        retryable?: boolean;
         input?: T;
     }>;
     /** Failed items ready for retry */
     failedItems?: T[];
+}
+
+/**
+ * Classify error type and determine if retryable
+ */
+function classifyError(error: string): { errorType: 'not_found' | 'auth_failed' | 'network' | 'validation' | 'unknown'; retryable: boolean } {
+    const lowerError = error.toLowerCase();
+
+    if (lowerError.includes('not found') || lowerError.includes('404')) {
+        return { errorType: 'not_found', retryable: false };
+    }
+    if (lowerError.includes('401') || lowerError.includes('unauthorized') || lowerError.includes('authentication')) {
+        return { errorType: 'auth_failed', retryable: false };
+    }
+    if (lowerError.includes('network') || lowerError.includes('timeout') || lowerError.includes('econnrefused') || lowerError.includes('429') || lowerError.includes('too many')) {
+        return { errorType: 'network', retryable: true };
+    }
+    if (lowerError.includes('invalid') || lowerError.includes('required') || lowerError.includes('validation')) {
+        return { errorType: 'validation', retryable: false };
+    }
+    return { errorType: 'unknown', retryable: true };
 }
 
 /**
@@ -131,11 +154,25 @@ export function formatBatchResults<T, R>(
             succeeded,
             failed,
         },
-        results: results.map((r) => ({
-            index: r.index,
-            success: r.success,
-            ...(r.success ? { task: r.result } : { error: r.error, input: r.input }),
-        })),
+        results: results.map((r) => {
+            if (r.success) {
+                return {
+                    index: r.index,
+                    success: true,
+                    task: r.result,
+                };
+            } else {
+                const { errorType, retryable } = classifyError(r.error || '');
+                return {
+                    index: r.index,
+                    success: false,
+                    error: r.error,
+                    errorType,
+                    retryable,
+                    input: r.input,
+                };
+            }
+        }),
         ...(failed > 0 && {
             failedItems: results.filter((r) => !r.success).map((r) => r.input),
         }),
@@ -161,13 +198,26 @@ export function formatBatchResultsSimple<
             succeeded,
             failed,
         },
-        results: results.map((r) => ({
-            index: r.index,
-            success: r.success,
-            ...(r.success
-                ? { taskId: r.input.taskId, projectId: r.input.projectId }
-                : { error: r.error, input: r.input }),
-        })),
+        results: results.map((r) => {
+            if (r.success) {
+                return {
+                    index: r.index,
+                    success: true,
+                    taskId: r.input.taskId,
+                    projectId: r.input.projectId,
+                };
+            } else {
+                const { errorType, retryable } = classifyError(r.error || '');
+                return {
+                    index: r.index,
+                    success: false,
+                    error: r.error,
+                    errorType,
+                    retryable,
+                    input: r.input,
+                };
+            }
+        }),
         ...(failed > 0 && {
             failedItems: results.filter((r) => !r.success).map((r) => r.input),
         }),

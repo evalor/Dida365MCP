@@ -12,11 +12,26 @@ import type { Task, Project } from "../../api/types.js";
 type DatePreset = "today" | "tomorrow" | "thisWeek" | "overdue";
 
 /**
- * Get date range for a preset
+ * Normalize a date to start of day in local timezone
+ */
+function normalizeToLocalDate(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/**
+ * Parse a date string and normalize to local date for comparison
+ */
+function parseAndNormalizeDate(dateStr: string): Date {
+    const date = new Date(dateStr);
+    return normalizeToLocalDate(date);
+}
+
+/**
+ * Get date range for a preset (in local timezone)
  */
 function getDateRangeForPreset(preset: DatePreset): { from: Date; to: Date } {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today = normalizeToLocalDate(now);
 
     switch (preset) {
         case "today":
@@ -69,13 +84,15 @@ function filterTasks(
             // For overdue, only include tasks with due dates before today
             filtered = filtered.filter((task) => {
                 if (!task.dueDate) return false;
-                const dueDate = new Date(task.dueDate);
-                return dueDate < to;
+                // Normalize task due date to local date for comparison
+                const dueDate = parseAndNormalizeDate(task.dueDate);
+                return dueDate < from; // Before start of today
             });
         } else {
             filtered = filtered.filter((task) => {
                 if (!task.dueDate) return false;
-                const dueDate = new Date(task.dueDate);
+                // Normalize task due date to local date for comparison
+                const dueDate = parseAndNormalizeDate(task.dueDate);
                 return dueDate >= from && dueDate <= to;
             });
         }
@@ -276,32 +293,45 @@ EXAMPLES:
 
                 // Filter projects if projectId specified
                 let targetProjects = projects;
+                let includeInbox = false;
+
                 if (projectIds) {
-                    // Handle "inbox" special case - inbox tasks have no project or empty projectId
-                    const hasInbox = projectIds.some((id) => id.toLowerCase() === "inbox");
+                    // Handle "inbox" special case
+                    includeInbox = projectIds.some((id) => id.toLowerCase() === "inbox");
                     const regularIds = projectIds.filter((id) => id.toLowerCase() !== "inbox");
 
+                    // Filter to only requested projects
                     targetProjects = projects.filter((p) => regularIds.includes(p.id));
-
-                    // Add a placeholder for inbox if requested
-                    if (hasInbox) {
-                        // We'll fetch inbox tasks separately
-                        targetProjects.push({ id: "inbox", name: "Inbox" } as Project);
-                    }
+                } else {
+                    // When no projectId specified, include inbox by default
+                    includeInbox = true;
                 }
 
                 // Collect tasks from all target projects
                 let allTasks: Task[] = [];
                 const projectNames: string[] = [];
 
+                // Fetch tasks from regular projects
                 for (const project of targetProjects) {
                     try {
                         const projectData = await getProjectData(project.id);
                         allTasks.push(...projectData.tasks);
                         projectNames.push(project.name);
                     } catch (error) {
-                        // Skip projects that fail (e.g., inbox might not be a real project)
+                        // Skip projects that fail
                         console.error(`Failed to get tasks for project ${project.id}:`, error);
+                    }
+                }
+
+                // Fetch inbox tasks separately
+                if (includeInbox) {
+                    try {
+                        const inboxData = await getProjectData("inbox");
+                        allTasks.push(...inboxData.tasks);
+                        projectNames.push("Inbox");
+                    } catch (error) {
+                        // Inbox fetch failed, continue without it
+                        console.error("Failed to get inbox tasks:", error);
                     }
                 }
 
@@ -317,13 +347,18 @@ EXAMPLES:
                 // Sort tasks
                 filteredTasks = sortTasks(filteredTasks, sortBy, sortOrder);
 
+                // Store total before limit
+                const totalBeforeLimit = filteredTasks.length;
+
                 // Apply limit
                 const limitedTasks = filteredTasks.slice(0, effectiveLimit);
 
                 const output = {
                     tasks: limitedTasks,
                     total: limitedTasks.length,
-                    filtered: hasFilters || limitedTasks.length < filteredTasks.length,
+                    totalBeforeLimit,
+                    filtered: hasFilters,
+                    truncated: limitedTasks.length < totalBeforeLimit,
                     projects: projectNames,
                 };
 
@@ -331,7 +366,7 @@ EXAMPLES:
                     content: [
                         {
                             type: "text",
-                            text: `Found ${output.total} task(s)${hasFilters ? " (filtered)" : ""} from ${projectNames.length} project(s)`,
+                            text: `Found ${totalBeforeLimit} task(s)${hasFilters ? " (filtered)" : ""} from ${projectNames.length} project(s)${output.truncated ? `, showing first ${output.total}` : ""}`,
                         },
                         { type: "text", text: JSON.stringify(output) },
                     ],
