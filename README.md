@@ -286,7 +286,7 @@ For AI agents that may run in YOLO mode, you can enable read-only mode by adding
 
 ## 🛠️ Available MCP Tools
 
-This server provides **15 MCP tools** across three categories, ✔️ 100% implemented all API interfaces described in the open platform documentation.
+This server provides **15 MCP tools** across three categories. ✔️ It has implemented 100% of the API interfaces described in the open platform documentation.
 
 | Category    | Tool Name           | Description                                              | Required Parameters   |
 | ----------- | ------------------- | -------------------------------------------------------- | --------------------- |
