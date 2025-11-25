@@ -24,6 +24,7 @@ export interface AuthStateInfo {
     authorized: boolean;
     error?: string;
     timestamp: number;
+    auth_url?: string;  // Authorization URL (only present when state is PENDING)
 }
 
 /**

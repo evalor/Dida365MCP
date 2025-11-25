@@ -11,7 +11,7 @@ export const registerRevokeAuth: ToolRegistrationFunction = (server, context) =>
         "revoke_auth",
         {
             title: "Revoke Authorization",
-            description: "Use ONLY when the user explicitly requests to log out, revoke, reset, clear, or remove Dida365 authorization/tokens. Do NOT call for token refresh, generic OAuth logout of other services, or routine task operations. Clears stored tokens; user must re-authorize afterward.",
+            description: "Use ONLY when the user explicitly requests to log out, revoke, reset, clear, or remove Dida365 authorization/tokens, OR to cancel a pending authorization that cannot be completed. Do NOT call for token refresh, generic OAuth logout of other services, or routine task operations. Clears stored tokens and stops any running authorization server; user must re-authorize afterward.",
             inputSchema: {},
             outputSchema: {
                 success: z.boolean(),

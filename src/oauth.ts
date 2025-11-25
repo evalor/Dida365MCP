@@ -22,6 +22,7 @@ export class OAuthManager {
     private stateManager: AuthStateManager;
     private callbackServer: OAuthCallbackServer | null = null;
     private currentState: string | null = null;
+    private currentAuthUrl: string | null = null;
     private validationContext: TokenValidationContext;
 
     /**
@@ -60,9 +61,9 @@ export class OAuthManager {
      * @returns {Promise<string>} Authorization URL
      */
     async getAuthorizationUrl(): Promise<string> {
-        // Check if authorization is already in progress
-        if (this.stateManager.isPending()) {
-            throw new Error('Authorization already in progress. Please complete or cancel the current authorization.');
+        // If authorization is already in progress, return existing URL (idempotent)
+        if (this.stateManager.isPending() && this.currentAuthUrl) {
+            return this.currentAuthUrl;
         }
 
         // Generate random state (prevent CSRF)
@@ -78,6 +79,9 @@ export class OAuthManager {
         });
 
         const authUrl = `${this.config.authEndpoint}?${params.toString()}`;
+
+        // Store the current auth URL
+        this.currentAuthUrl = authUrl;
 
         // Start callback server (asynchronous)
         this.startCallbackServer(this.currentState);
@@ -119,6 +123,7 @@ export class OAuthManager {
             this.callbackServer?.close();
             this.callbackServer = null;
             this.currentState = null;
+            this.currentAuthUrl = null;
         }
     }
 
@@ -224,7 +229,17 @@ export class OAuthManager {
             }
         }
 
-        return this.stateManager.getStateInfo();
+        const info = this.stateManager.getStateInfo();
+
+        // Add auth_url if pending
+        if (info.state === AuthState.PENDING && this.currentAuthUrl) {
+            return {
+                ...info,
+                auth_url: this.currentAuthUrl
+            };
+        }
+
+        return info;
     }
 
     /**
@@ -239,6 +254,9 @@ export class OAuthManager {
             this.callbackServer.close();
             this.callbackServer = null;
         }
+
+        // Clear auth URL
+        this.currentAuthUrl = null;
 
         console.error('Authorization revoked, token cleared');
     }
