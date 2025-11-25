@@ -1,6 +1,6 @@
 {
     "name": "dida365-mcp-server",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "MCP Server for Dida365 (TickTick) Task Management Integration",
     "type": "module",
     "main": "./build/index.js",
