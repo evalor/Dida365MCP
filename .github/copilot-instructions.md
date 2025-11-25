@@ -68,13 +68,23 @@ build/                    # Compiled output (tsc)
 ```bash
 DIDA365_CLIENT_ID       # OAuth2 Client ID
 DIDA365_CLIENT_SECRET   # OAuth2 Client Secret
+DIDA365_REGION          # Region: 'china' (default) or 'international'
 ```
+
+**Important Notes**:
+- **Token Isolation**: Tokens are region-specific. Changing the `DIDA365_REGION` environment variable will invalidate existing tokens and require re-authorization.
+- **Legacy Tokens**: Tokens saved before region support will be automatically invalidated on next startup.
 
 **OAuth Configuration**:
 - Redirect URI: `http://localhost:8521/callback`
-- Authorization Endpoint: `https://dida365.com/oauth/authorize`
-- Token Endpoint: `https://dida365.com/oauth/token`
-- API Base URL: `https://api.dida365.com/api/v2`
+- **China Region (Dida365)**:
+  - Authorization Endpoint: `https://dida365.com/oauth/authorize`
+  - Token Endpoint: `https://dida365.com/oauth/token`
+  - API Base URL: `https://api.dida365.com`
+- **International Region (TickTick)**:
+  - Authorization Endpoint: `https://ticktick.com/oauth/authorize`
+  - Token Endpoint: `https://ticktick.com/oauth/token`
+  - API Base URL: `https://api.ticktick.com`
 
 ## MCP Tools List
 

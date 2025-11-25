@@ -25,7 +25,7 @@ try {
     // Print configuration info (for debugging)
     printConfigInfo(oauthConfig);
 
-    // Initialize OAuth Manager
+    // Initialize OAuth Manager (region is obtained from APP_CONFIG internally)
     oauthManager = new OAuthManager(oauthConfig);
 
 } catch (error) {

@@ -132,7 +132,7 @@ export class AuthStateManager {
                 message = 'Successfully authorized';
                 break;
             case AuthState.EXPIRED:
-                message = 'Token expired. Attempting to refresh...';
+                message = 'Token expired. Please re-authorize.';
                 break;
             case AuthState.ERROR:
                 message = `Authorization error: ${this.lastError || 'Unknown error'}`;
@@ -166,27 +166,5 @@ export class AuthStateManager {
      */
     isPending(): boolean {
         return this.getState() === AuthState.PENDING;
-    }
-
-    /**
-     * Reset state
-     */
-    reset(): void {
-        this.currentState = AuthState.NOT_AUTHORIZED;
-        this.authStartTime = undefined;
-        this.lastError = undefined;
-        console.error('Auth state: RESET to NOT_AUTHORIZED');
-    }
-
-    /**
-     * Get waiting time (seconds)
-     * 
-     * @returns {number | null} Waiting time, returns null if not waiting
-     */
-    getWaitingTime(): number | null {
-        if (!this.authStartTime || this.currentState !== AuthState.PENDING) {
-            return null;
-        }
-        return Math.floor((Date.now() - this.authStartTime) / 1000);
     }
 }

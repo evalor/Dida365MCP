@@ -14,7 +14,7 @@
         "watch": "tsc --watch",
         "dev": "npm run build && node build/index.js",
         "start": "node build/index.js",
-        "debug": "npm run build && npx @modelcontextprotocol/inspector node build/index.js",
+        "debug": "npx @modelcontextprotocol/inspector debug-entry.bat",
         "serve-public": "npx http-server public -p 8080 -o",
         "test": "echo \"Error: no test specified\" && exit 1"
     },

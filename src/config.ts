@@ -85,33 +85,76 @@ export function isReadOnly(): boolean {
 }
 
 /**
+ * Get region from environment variable
+ */
+function getRegion(): 'china' | 'international' {
+    const region = process.env.DIDA365_REGION?.toLowerCase().trim();
+    if (region === 'international') {
+        return 'international';
+    }
+    return 'china'; // default
+}
+
+/**
+ * Get OAuth endpoints based on region
+ */
+function getOAuthEndpoints(region: 'china' | 'international') {
+    if (region === 'international') {
+        return {
+            AUTH_ENDPOINT: 'https://ticktick.com/oauth/authorize',
+            TOKEN_ENDPOINT: 'https://ticktick.com/oauth/token',
+        };
+    } else {
+        return {
+            AUTH_ENDPOINT: 'https://dida365.com/oauth/authorize',
+            TOKEN_ENDPOINT: 'https://dida365.com/oauth/token',
+        };
+    }
+}
+
+/**
+ * Get API base URL based on region
+ */
+function getApiBaseUrl(region: 'china' | 'international'): string {
+    return region === 'international' ? 'https://api.ticktick.com' : 'https://api.dida365.com';
+}
+
+/**
  * Application configuration constants
  * Contains all fixed configuration values for the application
  */
-export const APP_CONFIG = {
-    // OAuth2 Configuration
-    OAUTH: {
-        // Fixed callback address
-        REDIRECT_URI: 'http://localhost:8521/callback',
+export const APP_CONFIG = (() => {
+    const region = getRegion();
+    const endpoints = getOAuthEndpoints(region);
 
-        // Callback server configuration
-        CALLBACK_HOST: 'localhost',
-        CALLBACK_PORT: 8521,
+    return {
+        // Region configuration
+        REGION: region,
 
-        // Fixed permission scope
-        SCOPE: 'tasks:read tasks:write',
+        // OAuth2 Configuration
+        OAUTH: {
+            // Fixed callback address
+            REDIRECT_URI: 'http://localhost:8521/callback',
 
-        // Dida365 OAuth endpoints
-        AUTH_ENDPOINT: 'https://dida365.com/oauth/authorize',
-        TOKEN_ENDPOINT: 'https://dida365.com/oauth/token',
-    },
+            // Callback server configuration
+            CALLBACK_HOST: 'localhost',
+            CALLBACK_PORT: 8521,
 
-    // API Configuration
-    API: {
-        // Dida365 API base URL
-        BASE_URL: 'https://api.dida365.com',
-    },
-} as const;
+            // Fixed permission scope
+            SCOPE: 'tasks:read tasks:write',
+
+            // OAuth endpoints based on region
+            AUTH_ENDPOINT: endpoints.AUTH_ENDPOINT,
+            TOKEN_ENDPOINT: endpoints.TOKEN_ENDPOINT,
+        },
+
+        // API Configuration
+        API: {
+            // API base URL based on region
+            BASE_URL: getApiBaseUrl(region),
+        },
+    };
+})();
 
 /**
  * Load OAuth2 configuration from environment variables
@@ -172,8 +215,7 @@ export function validateOAuthConfig(config: OAuth2Config): boolean {
         !!config.clientId &&
         !!config.clientSecret &&
         config.clientId.length > 0 &&
-        config.clientSecret.length > 0 &&
-        config.redirectUri === APP_CONFIG.OAUTH.REDIRECT_URI
+        config.clientSecret.length > 0
     );
 }
 
@@ -184,12 +226,14 @@ export function validateOAuthConfig(config: OAuth2Config): boolean {
  */
 export function printConfigInfo(config: OAuth2Config): void {
     console.error('OAuth2 Configuration:');
+    console.error(`  Region: ${APP_CONFIG.REGION}`);
     console.error(`  Client ID: ${maskSensitiveString(config.clientId)}`);
     console.error(`  Client Secret: ${maskSensitiveString(config.clientSecret)}`);
     console.error(`  Redirect URI: ${config.redirectUri}`);
     console.error(`  Scope: ${config.scope}`);
     console.error(`  Auth Endpoint: ${config.authEndpoint}`);
     console.error(`  Token Endpoint: ${config.tokenEndpoint}`);
+    console.error(`  API Base URL: ${APP_CONFIG.API.BASE_URL}`);
     console.error(`  Read-Only Mode: ${isReadOnlyMode ? 'ENABLED ⚠️' : 'DISABLED'}`);
 }
 
