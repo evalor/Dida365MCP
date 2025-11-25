@@ -40,7 +40,7 @@ INPUT FORMAT: { "tasks": [{ "projectId": "...", "taskId": "..." }, ...] }
 
 ⚠️ IDEMPOTENT: Completing an already-completed or non-existent task returns success. Use 'get_task' first to verify if needed.
 
-⚠️ NOTE: Completed tasks are no longer returned by list_tasks or get_project_data.
+⚠️ NOTE: Completed tasks are no longer returned by 'list_tasks' or 'get_project_data'.
 
 BATCH BEHAVIOR: Non-atomic - some may succeed while others fail. Check summary.failed > 0.`,
             inputSchema: {
