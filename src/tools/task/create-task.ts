@@ -24,8 +24,7 @@ const ChecklistItemSchema = z.object({
 const TaskInputSchema = z.object({
     title: z.string().describe("Task title (required)"),
     projectId: z.string().describe('Project ID (required). Use "inbox" for inbox tasks.'),
-    content: z.string().optional().describe("Task content/notes for TEXT tasks (ignored for CHECKLIST)"),
-    desc: z.string().optional().describe("Description for CHECKLIST tasks with items"),
+    description: z.string().optional().describe("Task description/notes. Auto-mapped: to 'content' for TEXT tasks, to 'desc' for CHECKLIST tasks (with items)"),
     isAllDay: z.boolean().optional().describe("Is all-day task, default false (optional)"),
     startDate: z.string().optional().describe("Start time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
     dueDate: z.string().optional().describe("Due time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
@@ -34,7 +33,7 @@ const TaskInputSchema = z.object({
     repeatFlag: z.string().optional().describe("Repeat rule, e.g. RRULE:FREQ=DAILY;INTERVAL=1 (optional)"),
     priority: z.number().optional().describe("Priority: 0=none, 1=low, 3=medium, 5=high (optional)"),
     sortOrder: z.number().optional().describe("Sort order number (optional)"),
-    items: z.array(ChecklistItemSchema).optional().describe("Sub-task list (optional)"),
+    items: z.array(ChecklistItemSchema).optional().describe("Sub-task list. When provided, task becomes CHECKLIST type"),
 });
 
 // Task input type
@@ -55,8 +54,7 @@ REQUIRED per task:
 - projectId: Project ID or "inbox" for inbox tasks
 
 OPTIONAL per task:
-- content: Task content/notes (for TEXT tasks only, ignored for CHECKLIST)
-- desc: Description of checklist (for CHECKLIST tasks with items)
+- description: Task description/notes (auto-mapped to correct API field)
 - dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
 - startDate: Start date (ISO 8601)
 - priority: 0=none, 1=low, 3=medium, 5=high
@@ -64,11 +62,7 @@ OPTIONAL per task:
 - timeZone: e.g. "America/Los_Angeles"
 - reminders: ["TRIGGER:PT0S"] (at due time), ["TRIGGER:-PT30M"] (30min before)
 - repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for daily repeat
-- items: Sub-tasks array [{title, status: 0|1}]
-
-⚠️ IMPORTANT - content vs desc:
-- TEXT task (no items): Use "content" for task notes
-- CHECKLIST task (has items): Use "desc" for description. The "content" field is internally used by API to store checklist data and will NOT be displayed in the client.
+- items: Sub-tasks array [{title, status: 0|1}]. When provided, task becomes CHECKLIST type.
 
 BEHAVIOR:
 - NOT atomic: Some tasks may succeed while others fail
@@ -84,7 +78,15 @@ EXAMPLE (batch):
 { "tasks": [
   { "title": "Buy milk", "projectId": "inbox", "priority": 3 },
   { "title": "Call mom", "projectId": "xxx", "dueDate": "2025-11-25T18:00:00+0800" }
-]}`,
+]}
+
+EXAMPLE (with sub-tasks):
+{ "tasks": [{ 
+  "title": "Project Plan", 
+  "projectId": "xxx", 
+  "description": "Main project description",
+  "items": [{"title": "Step 1", "status": 0}, {"title": "Step 2", "status": 0}]
+}]}`,
             inputSchema: {
                 tasks: z.array(TaskInputSchema).min(1).describe("Array of tasks to create"),
             },
@@ -113,11 +115,20 @@ EXAMPLE (batch):
                 const results = await batchExecute<TaskInput, Task>(
                     tasks,
                     async (taskInput) => {
+                        // Auto-map description field based on task type:
+                        // - If items exist (CHECKLIST task): use 'desc' field
+                        // - If no items (TEXT task): use 'content' field
+                        const hasItems = taskInput.items && taskInput.items.length > 0;
+                        const descriptionMapping = taskInput.description !== undefined
+                            ? (hasItems
+                                ? { desc: taskInput.description }
+                                : { content: taskInput.description })
+                            : {};
+
                         const requestData: CreateTaskRequest = {
                             title: taskInput.title.trim(),
                             projectId: taskInput.projectId.trim(),
-                            ...(taskInput.content !== undefined && { content: taskInput.content }),
-                            ...(taskInput.desc !== undefined && { desc: taskInput.desc }),
+                            ...descriptionMapping,
                             ...(taskInput.isAllDay !== undefined && { isAllDay: taskInput.isAllDay }),
                             ...(taskInput.startDate !== undefined && { startDate: taskInput.startDate }),
                             ...(taskInput.dueDate !== undefined && { dueDate: taskInput.dueDate }),
