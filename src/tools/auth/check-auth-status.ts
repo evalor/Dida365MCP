@@ -17,6 +17,7 @@ export const registerCheckAuthStatus: ToolRegistrationFunction = (server, contex
                 authorized: z.boolean(),
                 state: z.string(),
                 message: z.string(),
+                auth_url: z.string().optional(),
             },
         },
         async () => {
@@ -27,6 +28,7 @@ export const registerCheckAuthStatus: ToolRegistrationFunction = (server, contex
                     authorized: statusInfo.authorized,
                     state: statusInfo.state,
                     message: statusInfo.message,
+                    ...(statusInfo.auth_url && { auth_url: statusInfo.auth_url }),
                 };
 
                 return {
