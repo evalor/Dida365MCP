@@ -57,8 +57,8 @@ REQUIRED per task:
 
 OPTIONAL per task (only provided fields are updated):
 - title: New task title
-- content: Task content/notes
-- desc: Task description
+- content: Task content/notes (⚠️ see IMPORTANT note below)
+- desc: Task description (recommended for checklist tasks)
 - dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
 - startDate: Start date (ISO 8601)
 - priority: 0=none, 1=low, 3=medium, 5=high
@@ -67,6 +67,9 @@ OPTIONAL per task (only provided fields are updated):
 - reminders: ["TRIGGER:PT0S"] (at due time)
 - repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for daily repeat
 - items: Sub-tasks array [{title, status: 0|1}]
+
+⚠️ IMPORTANT - content vs desc:
+For CHECKLIST tasks (tasks with sub-tasks/items), the API uses "content" field internally to store checklist data. Your content will be OVERWRITTEN. Use "desc" for descriptions on checklist tasks.
 
 BEHAVIOR:
 - NOT atomic: Some tasks may succeed while others fail
