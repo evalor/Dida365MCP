@@ -22,7 +22,7 @@ WHEN TO USE:
 
 WHEN NOT TO USE:
 - Just archiving or hiding a project (not supported)
-- Moving tasks to another project first → use update_task
+- Moving tasks to another project first → use 'update_task'
 
 REQUIRED: projectId`,
             inputSchema: {
