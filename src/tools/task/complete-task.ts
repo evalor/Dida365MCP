@@ -36,6 +36,8 @@ BEHAVIOR:
 - Check summary.failed > 0 for failures
 - Use failedItems array to retry failed tasks
 
+⚠️ NOTE: This API is idempotent - completing a non-existent or already completed task will still return success. Use 'get_task' first if you need to verify the task exists.
+
 EXAMPLE (single):
 { "tasks": [{ "projectId": "abc123", "taskId": "task456" }] }
 
