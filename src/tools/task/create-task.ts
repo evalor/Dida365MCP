@@ -24,8 +24,8 @@ const ChecklistItemSchema = z.object({
 const TaskInputSchema = z.object({
     title: z.string().describe("Task title (required)"),
     projectId: z.string().describe('Project ID (required). Use "inbox" for inbox tasks.'),
-    content: z.string().optional().describe("Task content (optional)"),
-    desc: z.string().optional().describe("Task description (optional)"),
+    content: z.string().optional().describe("Task content/notes for TEXT tasks (ignored for CHECKLIST)"),
+    desc: z.string().optional().describe("Description for CHECKLIST tasks with items"),
     isAllDay: z.boolean().optional().describe("Is all-day task, default false (optional)"),
     startDate: z.string().optional().describe("Start time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
     dueDate: z.string().optional().describe("Due time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
@@ -55,8 +55,8 @@ REQUIRED per task:
 - projectId: Project ID or "inbox" for inbox tasks
 
 OPTIONAL per task:
-- content: Task content/notes (⚠️ see IMPORTANT note below)
-- desc: Task description (recommended for tasks with sub-tasks)
+- content: Task content/notes (for TEXT tasks only, ignored for CHECKLIST)
+- desc: Description of checklist (for CHECKLIST tasks with items)
 - dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
 - startDate: Start date (ISO 8601)
 - priority: 0=none, 1=low, 3=medium, 5=high
@@ -67,7 +67,8 @@ OPTIONAL per task:
 - items: Sub-tasks array [{title, status: 0|1}]
 
 ⚠️ IMPORTANT - content vs desc:
-When a task has "items" (sub-tasks), it becomes a CHECKLIST task. The API internally uses the "content" field to store checklist data, which will OVERWRITE any content you provide. Use "desc" instead for task descriptions when using sub-tasks.
+- TEXT task (no items): Use "content" for task notes
+- CHECKLIST task (has items): Use "desc" for description. The "content" field is internally used by API to store checklist data and will NOT be displayed in the client.
 
 BEHAVIOR:
 - NOT atomic: Some tasks may succeed while others fail

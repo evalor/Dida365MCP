@@ -25,8 +25,8 @@ const TaskUpdateSchema = z.object({
     taskId: z.string().describe("Task ID (required)"),
     projectId: z.string().describe("Project ID (required)"),
     title: z.string().optional().describe("Task title (optional)"),
-    content: z.string().optional().describe("Task content (optional)"),
-    desc: z.string().optional().describe("Task description (optional)"),
+    content: z.string().optional().describe("Task content/notes for TEXT tasks (ignored for CHECKLIST)"),
+    desc: z.string().optional().describe("Description for CHECKLIST tasks with items"),
     isAllDay: z.boolean().optional().describe("Is all-day task (optional)"),
     startDate: z.string().optional().describe("Start time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
     dueDate: z.string().optional().describe("Due time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
@@ -57,8 +57,8 @@ REQUIRED per task:
 
 OPTIONAL per task (only provided fields are updated):
 - title: New task title
-- content: Task content/notes (⚠️ see IMPORTANT note below)
-- desc: Task description (recommended for checklist tasks)
+- content: Task content/notes (for TEXT tasks only, ignored for CHECKLIST)
+- desc: Description of checklist (for CHECKLIST tasks with items)
 - dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
 - startDate: Start date (ISO 8601)
 - priority: 0=none, 1=low, 3=medium, 5=high
@@ -69,7 +69,8 @@ OPTIONAL per task (only provided fields are updated):
 - items: Sub-tasks array [{title, status: 0|1}]
 
 ⚠️ IMPORTANT - content vs desc:
-For CHECKLIST tasks (tasks with sub-tasks/items), the API uses "content" field internally to store checklist data. Your content will be OVERWRITTEN. Use "desc" for descriptions on checklist tasks.
+- TEXT task (no items): Use "content" for task notes
+- CHECKLIST task (has items): Use "desc" for description. The "content" field is internally used by API to store checklist data and will NOT be displayed in the client.
 
 BEHAVIOR:
 - NOT atomic: Some tasks may succeed while others fail
