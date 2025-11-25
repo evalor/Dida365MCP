@@ -25,6 +25,7 @@ import { registerGetTask } from "./task/get-task.js";
 import { registerUpdateTask } from "./task/update-task.js";
 import { registerDeleteTask } from "./task/delete-task.js";
 import { registerCompleteTask } from "./task/complete-task.js";
+import { registerListTasks } from "./task/list-tasks.js";
 
 /**
  * Register all tools with the MCP server
@@ -52,7 +53,8 @@ export function registerAllTools(server: McpServer, context: ToolContext, readOn
     }
 
     // Register Task management tools
-    registerGetTask(server, context);  // Read-only
+    registerGetTask(server, context);   // Read-only
+    registerListTasks(server, context); // Read-only
 
     // Write/Delete operations - only register in writable mode
     if (!readOnly) {

@@ -1,0 +1,361 @@
+/**
+ * Tool: List Tasks
+ * List tasks with various filtering options
+ */
+
+import { z } from "zod";
+import type { ToolRegistrationFunction } from "../types.js";
+import { listProjects, getProjectData } from "../../api/index.js";
+import type { Task, Project } from "../../api/types.js";
+
+// Preset date ranges
+type DatePreset = "today" | "tomorrow" | "thisWeek" | "overdue";
+
+/**
+ * Get date range for a preset
+ */
+function getDateRangeForPreset(preset: DatePreset): { from: Date; to: Date } {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (preset) {
+        case "today":
+            return {
+                from: today,
+                to: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1),
+            };
+        case "tomorrow": {
+            const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+            return {
+                from: tomorrow,
+                to: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000 - 1),
+            };
+        }
+        case "thisWeek": {
+            const dayOfWeek = today.getDay();
+            const startOfWeek = new Date(today.getTime() - dayOfWeek * 24 * 60 * 60 * 1000);
+            const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+            return { from: startOfWeek, to: endOfWeek };
+        }
+        case "overdue":
+            return {
+                from: new Date(0), // Beginning of time
+                to: new Date(today.getTime() - 1), // Yesterday end
+            };
+        default:
+            throw new Error(`Unknown preset: ${preset}`);
+    }
+}
+
+/**
+ * Filter tasks based on criteria
+ */
+function filterTasks(
+    tasks: Task[],
+    options: {
+        dueDateFrom?: string;
+        dueDateTo?: string;
+        priority?: number[];
+        preset?: DatePreset;
+    }
+): Task[] {
+    let filtered = [...tasks];
+
+    // Apply preset date range
+    if (options.preset) {
+        const { from, to } = getDateRangeForPreset(options.preset);
+
+        if (options.preset === "overdue") {
+            // For overdue, only include tasks with due dates before today
+            filtered = filtered.filter((task) => {
+                if (!task.dueDate) return false;
+                const dueDate = new Date(task.dueDate);
+                return dueDate < to;
+            });
+        } else {
+            filtered = filtered.filter((task) => {
+                if (!task.dueDate) return false;
+                const dueDate = new Date(task.dueDate);
+                return dueDate >= from && dueDate <= to;
+            });
+        }
+    }
+
+    // Apply custom date range filters
+    if (options.dueDateFrom) {
+        const fromDate = new Date(options.dueDateFrom);
+        filtered = filtered.filter((task) => {
+            if (!task.dueDate) return false;
+            return new Date(task.dueDate) >= fromDate;
+        });
+    }
+
+    if (options.dueDateTo) {
+        const toDate = new Date(options.dueDateTo);
+        filtered = filtered.filter((task) => {
+            if (!task.dueDate) return false;
+            return new Date(task.dueDate) <= toDate;
+        });
+    }
+
+    // Apply priority filter
+    if (options.priority && options.priority.length > 0) {
+        filtered = filtered.filter((task) =>
+            options.priority!.includes(task.priority ?? 0)
+        );
+    }
+
+    return filtered;
+}
+
+/**
+ * Sort tasks by specified field
+ */
+function sortTasks(
+    tasks: Task[],
+    sortBy: "dueDate" | "priority" | "createdTime" = "dueDate",
+    sortOrder: "asc" | "desc" = "asc"
+): Task[] {
+    const sorted = [...tasks];
+
+    sorted.sort((a, b) => {
+        let comparison = 0;
+
+        switch (sortBy) {
+            case "dueDate": {
+                const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+                const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+                comparison = dateA - dateB;
+                break;
+            }
+            case "priority": {
+                // Higher priority (5) should come first in desc, last in asc
+                const prioA = a.priority ?? 0;
+                const prioB = b.priority ?? 0;
+                comparison = prioA - prioB;
+                break;
+            }
+            case "createdTime": {
+                // Use sortOrder as proxy for creation time
+                const orderA = a.sortOrder ?? 0;
+                const orderB = b.sortOrder ?? 0;
+                comparison = orderA - orderB;
+                break;
+            }
+        }
+
+        return sortOrder === "desc" ? -comparison : comparison;
+    });
+
+    return sorted;
+}
+
+export const registerListTasks: ToolRegistrationFunction = (server, context) => {
+    server.registerTool(
+        "list_tasks",
+        {
+            title: "List Tasks",
+            description: `List and filter tasks from projects.
+
+FILTERING OPTIONS:
+- projectId: Single project ID, array of IDs, or "inbox" for inbox tasks
+- preset: Quick filters - "today", "tomorrow", "thisWeek", "overdue"
+- dueDateFrom/dueDateTo: Custom date range (ISO 8601 format)
+- priority: Filter by priority levels (0=none, 1=low, 3=medium, 5=high)
+
+SORTING:
+- sortBy: "dueDate" (default), "priority", or "createdTime"
+- sortOrder: "asc" (default) or "desc"
+
+LIMITS:
+- limit: Max tasks to return (default 50, max 200)
+
+⚠️ IMPORTANT: Only returns UNCOMPLETED tasks (status=0). Completed tasks are not available via API.
+
+EXAMPLES:
+- Today's tasks: { "preset": "today" }
+- High priority: { "priority": [5] }
+- This week from inbox: { "projectId": "inbox", "preset": "thisWeek" }`,
+            inputSchema: {
+                projectId: z
+                    .union([z.string(), z.array(z.string())])
+                    .optional()
+                    .describe('Project ID(s) to filter. Use "inbox" for inbox tasks. If omitted, searches all projects.'),
+                dueDateFrom: z
+                    .string()
+                    .optional()
+                    .describe("Filter tasks with due date >= this value (ISO 8601 format)"),
+                dueDateTo: z
+                    .string()
+                    .optional()
+                    .describe("Filter tasks with due date <= this value (ISO 8601 format)"),
+                priority: z
+                    .union([z.number(), z.array(z.number())])
+                    .optional()
+                    .describe("Filter by priority: 0=none, 1=low, 3=medium, 5=high"),
+                preset: z
+                    .enum(["today", "tomorrow", "thisWeek", "overdue"])
+                    .optional()
+                    .describe("Quick date filter preset"),
+                limit: z
+                    .number()
+                    .optional()
+                    .describe("Maximum number of tasks to return (default 50, max 200)"),
+                sortBy: z
+                    .enum(["dueDate", "priority", "createdTime"])
+                    .optional()
+                    .describe("Sort field (default: dueDate)"),
+                sortOrder: z
+                    .enum(["asc", "desc"])
+                    .optional()
+                    .describe("Sort order (default: asc)"),
+            },
+            outputSchema: z.object({
+                tasks: z.array(z.any()),
+                total: z.number(),
+                filtered: z.boolean(),
+                projects: z.array(z.string()),
+            }),
+        },
+        async (args) => {
+            try {
+                const {
+                    projectId,
+                    dueDateFrom,
+                    dueDateTo,
+                    priority,
+                    preset,
+                    limit = 50,
+                    sortBy = "dueDate",
+                    sortOrder = "asc",
+                } = args as {
+                    projectId?: string | string[];
+                    dueDateFrom?: string;
+                    dueDateTo?: string;
+                    priority?: number | number[];
+                    preset?: DatePreset;
+                    limit?: number;
+                    sortBy?: "dueDate" | "priority" | "createdTime";
+                    sortOrder?: "asc" | "desc";
+                };
+
+                // Normalize projectId to array
+                let projectIds: string[] | undefined;
+                if (projectId) {
+                    projectIds = Array.isArray(projectId) ? projectId : [projectId];
+                }
+
+                // Normalize priority to array
+                const priorityArray = priority
+                    ? Array.isArray(priority)
+                        ? priority
+                        : [priority]
+                    : undefined;
+
+                // Cap limit at 200
+                const effectiveLimit = Math.min(limit, 200);
+
+                // Get all projects if no specific project filter
+                let projects: Project[];
+                try {
+                    projects = await listProjects();
+                } catch (error) {
+                    const errorMsg = error instanceof Error ? error.message : String(error);
+                    if (errorMsg.includes("401") || errorMsg.includes("Unauthorized")) {
+                        return {
+                            content: [{
+                                type: "text",
+                                text: `Authorization failed: ${errorMsg}. Please use the 'get_auth_url' tool to re-authorize.`,
+                                isError: true,
+                            }],
+                            isError: true,
+                        };
+                    }
+                    throw error;
+                }
+
+                // Filter projects if projectId specified
+                let targetProjects = projects;
+                if (projectIds) {
+                    // Handle "inbox" special case - inbox tasks have no project or empty projectId
+                    const hasInbox = projectIds.some((id) => id.toLowerCase() === "inbox");
+                    const regularIds = projectIds.filter((id) => id.toLowerCase() !== "inbox");
+
+                    targetProjects = projects.filter((p) => regularIds.includes(p.id));
+
+                    // Add a placeholder for inbox if requested
+                    if (hasInbox) {
+                        // We'll fetch inbox tasks separately
+                        targetProjects.push({ id: "inbox", name: "Inbox" } as Project);
+                    }
+                }
+
+                // Collect tasks from all target projects
+                let allTasks: Task[] = [];
+                const projectNames: string[] = [];
+
+                for (const project of targetProjects) {
+                    try {
+                        const projectData = await getProjectData(project.id);
+                        allTasks.push(...projectData.tasks);
+                        projectNames.push(project.name);
+                    } catch (error) {
+                        // Skip projects that fail (e.g., inbox might not be a real project)
+                        console.error(`Failed to get tasks for project ${project.id}:`, error);
+                    }
+                }
+
+                // Apply filters
+                const hasFilters = !!(dueDateFrom || dueDateTo || priorityArray || preset);
+                let filteredTasks = filterTasks(allTasks, {
+                    dueDateFrom,
+                    dueDateTo,
+                    priority: priorityArray,
+                    preset,
+                });
+
+                // Sort tasks
+                filteredTasks = sortTasks(filteredTasks, sortBy, sortOrder);
+
+                // Apply limit
+                const limitedTasks = filteredTasks.slice(0, effectiveLimit);
+
+                const output = {
+                    tasks: limitedTasks,
+                    total: limitedTasks.length,
+                    filtered: hasFilters || limitedTasks.length < filteredTasks.length,
+                    projects: projectNames,
+                };
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Found ${output.total} task(s)${hasFilters ? " (filtered)" : ""} from ${projectNames.length} project(s)`,
+                        },
+                        { type: "text", text: JSON.stringify(output) },
+                    ],
+                    structuredContent: output as unknown as Record<string, unknown>,
+                };
+            } catch (error) {
+                const errorMsg = error instanceof Error ? error.message : String(error);
+
+                if (errorMsg.includes("401") || errorMsg.includes("Unauthorized") || errorMsg.includes("Authentication failed")) {
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Authorization failed: ${errorMsg}. Please use the 'get_auth_url' tool to re-authorize.`,
+                            isError: true,
+                        }],
+                        isError: true,
+                    };
+                }
+
+                return {
+                    content: [{ type: "text", text: `Failed to list tasks: ${errorMsg}`, isError: true }],
+                    isError: true,
+                };
+            }
+        }
+    );
+};

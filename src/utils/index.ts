@@ -6,3 +6,4 @@
 
 export * from './http.js';
 export * from './hash.js';
+export * from './batch.js';
