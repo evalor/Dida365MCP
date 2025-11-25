@@ -23,7 +23,7 @@ const ChecklistItemSchema = z.object({
 // Single task input schema
 const TaskInputSchema = z.object({
     title: z.string().describe("Task title (任务标题, required)"),
-    projectId: z.string().describe('Project ID (清单ID, required). Use "inbox" for inbox tasks (收集箱).'),
+    projectId: z.string().describe('Project ID (清单ID, required). Use "inbox" ONLY for tasks temporarily inconvenient to classify (收集箱仅用于临时存放暂时不便分类的任务). Prefer using a specific project when context indicates one.'),
     description: z.string().optional().describe("Task description/notes (任务描述/备注). Auto-mapped: to 'content' for TEXT tasks, to 'desc' for CHECKLIST tasks (with items)"),
     isAllDay: z.boolean().optional().describe("Is all-day task (全天任务), default false (optional)"),
     startDate: z.string().optional().describe("Start time (开始日期), format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
@@ -51,9 +51,15 @@ WHEN TO USE:
 - Create tasks with due dates (截止日期), priorities (优先级), reminders (提醒)
 - Create tasks with sub-tasks (子任务/检查项)
 
+⚠️ IMPORTANT - INBOX VS PROJECT (收集箱与清单选择):
+The inbox (收集箱) is ONLY for tasks temporarily inconvenient to classify.
+- Use a specific PROJECT when: user mentions a project name (e.g., "工作清单", "学习清单"), or context clearly indicates which project the task belongs to
+- Use "inbox" ONLY when: user explicitly says "收集箱"/"inbox", OR user doesn't specify any project AND the task has no clear category
+- DO NOT arbitrarily place tasks in inbox when a project can be identified from context
+
 REQUIRED (per task):
 - title: Task name (任务标题)
-- projectId: Target project ID (清单ID), or "inbox" for inbox (收集箱)
+- projectId: Target project ID (清单ID), or "inbox" for inbox (收集箱) - see above for when to use each
 
 OPTIONAL (per task):
 - description: Task notes (任务备注, auto-maps to correct field)
