@@ -43,7 +43,7 @@ The **Inbox (收集箱)** is designed for tasks that are **temporarily inconveni
 - Context suggests a clear category (e.g., work tasks go to work project)
 - User says "在我的XX清单里创建任务" (create task in my XX project)
 
-收集箱是用于**临时存放暂时不便分类的任务**。当用户明确指定了清单，或者根据上下文可以判断任务应该属于某个清单时，不应该将任务放入收集箱。
+收集箱是用于**临时存放暂时不便分类的任务**。当用户明确指定清单，或者根据上下文可以判断任务应该属于某个清单时，不应该将任务放入收集箱。
 
 ## Task Properties (任务属性)
 
