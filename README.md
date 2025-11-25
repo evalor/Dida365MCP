@@ -308,6 +308,28 @@ This server provides **15 MCP tools** across three categories. ✔️ It has imp
 
 > **Note**: In read-only mode, only read operations are available (`get_auth_url`, `check_auth_status`, `revoke_auth`, `list_projects`, `get_project`, `get_project_data`, `list_tasks`, `get_task`). All write/delete operations are blocked for security.
 
+## 📚 MCP Resources
+
+This server provides an MCP Resource to help LLMs understand Simplified Chinese terminology:
+
+| Resource Name | URI | Description |
+|--------------|-----|-------------|
+| `terminology` | `dida365://terminology/glossary` | Bilingual glossary (中英术语对照表) mapping Chinese terms to English parameters |
+
+### Terminology Resource
+
+The terminology resource provides a comprehensive glossary that helps LLMs:
+- Map Chinese terms like "清单" (project), "收集箱" (inbox), "任务" (task) to correct tool parameters
+- Understand priority levels: 高(high)=5, 中(medium)=3, 低(low)=1, 无(none)=0
+- Convert common Chinese user requests to appropriate tool calls
+
+**Example mappings:**
+| Chinese Request | English Meaning | Tool to Use |
+|----------------|-----------------|-------------|
+| 把任务添加到收集箱 | Add task to inbox | `create_task` with `projectId: "inbox"` |
+| 创建新清单 | Create new project | `create_project` |
+| 查看今天的任务 | View today's tasks | `list_tasks` with `preset: "today"` |
+
 ## 📁 Project Structure
 
 ```
@@ -319,6 +341,9 @@ src/
 ├── token.ts              # Token persistence
 ├── utils/                # Utility modules
 │   └── batch.ts          # Batch execution utilities
+├── resources/            # MCP resources
+│   ├── index.ts          # Resource registration
+│   └── terminology.ts    # Bilingual terminology glossary
 └── tools/                # MCP tools (15 total)
     ├── auth/             # OAuth tools (3)
     ├── project/          # Project management (6)
@@ -337,10 +362,11 @@ src/
 - [x] Batch operations support (create/update/delete/complete multiple tasks)
 - [x] List tasks with filtering (cross-project queries, date/priority filters)
 - [x] Inbox task operations support
+- [x] Bilingual tool descriptions for Chinese users (中英双语工具描述)
+- [x] MCP Resource for terminology glossary (术语对照表资源)
 
 ### 🚀 Next Steps
 
-- [ ] Optimize tool descriptions for better LLM integration
 - [ ] Add parameters to limit the ProjectId that the MCP can access
 
 ### 💡 Future Ideas

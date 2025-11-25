@@ -10,8 +10,8 @@ import { batchExecute, formatBatchResultsSimple } from "../../utils/batch.js";
 
 // Single task reference schema
 const TaskRefSchema = z.object({
-    projectId: z.string().describe("Project ID (required)"),
-    taskId: z.string().describe("Task ID (required)"),
+    projectId: z.string().describe("Project ID (清单ID, required)"),
+    taskId: z.string().describe("Task ID (任务ID, required)"),
 });
 
 // Task reference type
@@ -22,25 +22,25 @@ export const registerCompleteTask: ToolRegistrationFunction = (server, context) 
         "complete_task",
         {
             title: "Complete Task(s)",
-            description: `Mark one or more tasks as completed. Supports batch completion.
+            description: `Mark one or more tasks (任务) as completed (已完成). Supports batch completion.
 
 WHEN TO USE:
-- User finished a task and wants to mark it done
+- User finished a task and wants to mark it done (完成任务)
 - Batch complete multiple related tasks
 
 WHEN NOT TO USE:
-- Delete a task permanently → use 'delete_task'
-- Update other task properties → use 'update_task'
+- Delete a task permanently (删除任务) → use 'delete_task'
+- Update other task properties (修改任务) → use 'update_task'
 
 REQUIRED (per task):
-- projectId: Project containing the task
-- taskId: Task to mark complete
+- projectId: Project containing the task (清单ID)
+- taskId: Task to mark complete (任务ID)
 
 INPUT FORMAT: { "tasks": [{ "projectId": "...", "taskId": "..." }, ...] }
 
 ⚠️ IDEMPOTENT: Completing an already-completed or non-existent task returns success. Use 'get_task' first to verify if needed.
 
-⚠️ NOTE: Completed tasks are no longer returned by 'list_tasks' or 'get_project_data'.
+⚠️ NOTE: Completed tasks (已完成任务) are no longer returned by 'list_tasks' or 'get_project_data'.
 
 BATCH BEHAVIOR: Non-atomic - some may succeed while others fail. Check summary.failed > 0.`,
             inputSchema: {

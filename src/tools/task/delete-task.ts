@@ -10,8 +10,8 @@ import { batchExecute, formatBatchResultsSimple } from "../../utils/batch.js";
 
 // Single task reference schema
 const TaskRefSchema = z.object({
-    projectId: z.string().describe("Project ID (required)"),
-    taskId: z.string().describe("Task ID (required)"),
+    projectId: z.string().describe("Project ID (清单ID, required)"),
+    taskId: z.string().describe("Task ID (任务ID, required)"),
 });
 
 // Task reference type
@@ -22,21 +22,21 @@ export const registerDeleteTask: ToolRegistrationFunction = (server, context) =>
         "delete_task",
         {
             title: "Delete Task(s)",
-            description: `Permanently delete one or more tasks. Supports batch deletion.
+            description: `Permanently delete one or more tasks (任务). Supports batch deletion.
 
-⚠️ DESTRUCTIVE: This action cannot be undone!
+⚠️ DESTRUCTIVE: This action cannot be undone! (此操作无法撤销!)
 
 WHEN TO USE:
-- User explicitly requests to remove/delete a task
+- User explicitly requests to remove/delete a task (删除任务)
 - Cleaning up unwanted tasks
 
 WHEN NOT TO USE:
-- Complete a task → use 'complete_task'
+- Complete a task (完成任务) → use 'complete_task'
 - Archive a task (not supported by API)
 
 REQUIRED (per task):
-- projectId: Project containing the task
-- taskId: Task to delete
+- projectId: Project containing the task (清单ID)
+- taskId: Task to delete (任务ID)
 
 INPUT FORMAT: { "tasks": [{ "projectId": "...", "taskId": "..." }, ...] }
 

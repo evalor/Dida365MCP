@@ -12,21 +12,21 @@ export const registerDeleteProject: ToolRegistrationFunction = (server, context)
         "delete_project",
         {
             title: "Delete Project",
-            description: `Permanently delete a project and all its contents.
+            description: `Permanently delete a project (清单) and all its contents.
 
-⚠️ DESTRUCTIVE: This action cannot be undone. All tasks within the project will also be deleted.
+⚠️ DESTRUCTIVE: This action cannot be undone. All tasks (任务) within the project will also be deleted (此操作无法撤销，清单内所有任务也将被删除).
 
 WHEN TO USE:
-- User explicitly requests to delete a project
+- User explicitly requests to delete a project (删除清单)
 - Cleaning up unused/empty projects
 
 WHEN NOT TO USE:
 - Just archiving or hiding a project (not supported)
-- Moving tasks to another project first → use 'update_task'
+- Moving tasks to another project first (移动任务) → use 'update_task'
 
-REQUIRED: projectId`,
+REQUIRED: projectId (清单ID)`,
             inputSchema: {
-                projectId: z.string().describe("The unique ID of the project to delete"),
+                projectId: z.string().describe("The unique ID of the project to delete (清单ID)"),
             },
             outputSchema: {
                 projectId: z.string(),

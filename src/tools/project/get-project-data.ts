@@ -12,23 +12,23 @@ export const registerGetProjectData: ToolRegistrationFunction = (server, context
         "get_project_data",
         {
             title: "Get Project Data",
-            description: `Retrieve complete project data including project details, tasks, and kanban columns.
+            description: `Retrieve complete project (清单) data including project details, tasks (任务), and kanban columns (看板列).
 
 WHEN TO USE:
-- Get all uncompleted tasks within a specific project
+- Get all uncompleted tasks (未完成任务) within a specific project (清单)
 - Need project metadata AND tasks together
-- View kanban column structure for kanban-view projects
+- View kanban column structure (看板列结构) for kanban-view projects
 
 WHEN NOT TO USE:
 - Only need project metadata → use 'get_project' (faster)
-- Filter tasks by date/priority/across projects → use 'list_tasks'
-- Need completed tasks → NOT available via API
+- Filter tasks by date/priority/across projects (按日期/优先级筛选) → use 'list_tasks'
+- Need completed tasks (已完成任务) → NOT available via API
 
-⚠️ LIMITATION: Only returns UNCOMPLETED tasks (status=0). Completed tasks are not accessible.
+⚠️ LIMITATION: Only returns UNCOMPLETED tasks (未完成任务, status=0). Completed tasks are not accessible.
 
-RETURNS: { project, tasks[], columns[] } - project metadata, task list, and kanban columns.`,
+RETURNS: { project, tasks[], columns[] } - project metadata (清单信息), task list (任务列表), and kanban columns (看板列).`,
             inputSchema: {
-                projectId: z.string().describe("The unique ID of the project to retrieve data for"),
+                projectId: z.string().describe("The unique ID of the project to retrieve data for (清单ID)"),
             },
             outputSchema: {
                 project: z.object({

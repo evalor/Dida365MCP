@@ -12,20 +12,20 @@ export const registerGetProject: ToolRegistrationFunction = (server, context) =>
         "get_project",
         {
             title: "Get Project",
-            description: `Retrieve metadata for a single project by ID.
+            description: `Retrieve metadata for a single project (清单) by ID.
 
 WHEN TO USE:
-- Check project settings (name, color, viewMode, permissions)
+- Check project settings (name/名称, color/颜色, viewMode/视图模式, permissions)
 - Verify a project exists before operations
 - Get project metadata without loading tasks
 
 WHEN NOT TO USE:
-- Need tasks within the project → use 'get_project_data' or 'list_tasks'
-- Need to filter tasks by date/priority → use 'list_tasks'
+- Need tasks within the project (清单内的任务) → use 'get_project_data' or 'list_tasks'
+- Need to filter tasks by date/priority (按日期/优先级筛选) → use 'list_tasks'
 
-RETURNS: Project metadata only (id, name, color, viewMode, kind, permissions). Does NOT include tasks.`,
+RETURNS: Project metadata only (id, name/名称, color/颜色, viewMode/视图模式, kind/类型, permissions). Does NOT include tasks.`,
             inputSchema: {
-                projectId: z.string().describe("The unique ID of the project to retrieve"),
+                projectId: z.string().describe("The unique ID of the project to retrieve (清单ID)"),
             },
             outputSchema: {
                 id: z.string(),
