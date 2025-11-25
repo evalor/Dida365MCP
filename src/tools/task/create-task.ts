@@ -22,18 +22,18 @@ const ChecklistItemSchema = z.object({
 
 // Single task input schema
 const TaskInputSchema = z.object({
-    title: z.string().describe("Task title (required)"),
-    projectId: z.string().describe('Project ID (required). Use "inbox" for inbox tasks.'),
-    description: z.string().optional().describe("Task description/notes. Auto-mapped: to 'content' for TEXT tasks, to 'desc' for CHECKLIST tasks (with items)"),
-    isAllDay: z.boolean().optional().describe("Is all-day task, default false (optional)"),
-    startDate: z.string().optional().describe("Start time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
-    dueDate: z.string().optional().describe("Due time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
-    timeZone: z.string().optional().describe("Time zone, e.g. America/Los_Angeles (optional)"),
-    reminders: z.array(z.string()).optional().describe("Reminder list, e.g. ['TRIGGER:PT0S'] (optional)"),
-    repeatFlag: z.string().optional().describe("Repeat rule, e.g. RRULE:FREQ=DAILY;INTERVAL=1 (optional)"),
-    priority: z.number().optional().describe("Priority: 0=none, 1=low, 3=medium, 5=high (optional)"),
-    sortOrder: z.number().optional().describe("Sort order number (optional)"),
-    items: z.array(ChecklistItemSchema).optional().describe("Sub-task list. When provided, task becomes CHECKLIST type"),
+    title: z.string().describe("Task title (任务标题, required)"),
+    projectId: z.string().describe('Project ID (清单ID, required). Use "inbox" for inbox tasks (收集箱).'),
+    description: z.string().optional().describe("Task description/notes (任务描述/备注). Auto-mapped: to 'content' for TEXT tasks, to 'desc' for CHECKLIST tasks (with items)"),
+    isAllDay: z.boolean().optional().describe("Is all-day task (全天任务), default false (optional)"),
+    startDate: z.string().optional().describe("Start time (开始日期), format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
+    dueDate: z.string().optional().describe("Due time (截止日期), format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
+    timeZone: z.string().optional().describe("Time zone (时区), e.g. America/Los_Angeles (optional)"),
+    reminders: z.array(z.string()).optional().describe("Reminder list (提醒列表), e.g. ['TRIGGER:PT0S'] (optional)"),
+    repeatFlag: z.string().optional().describe("Repeat rule (重复规则), e.g. RRULE:FREQ=DAILY;INTERVAL=1 (optional)"),
+    priority: z.number().optional().describe("Priority (优先级): 0=none (无), 1=low (低), 3=medium (中), 5=high (高) (optional)"),
+    sortOrder: z.number().optional().describe("Sort order number (排序序号, optional)"),
+    items: z.array(ChecklistItemSchema).optional().describe("Sub-task list (子任务/检查项列表). When provided, task becomes CHECKLIST type"),
 });
 
 // Task input type
@@ -44,31 +44,31 @@ export const registerCreateTask: ToolRegistrationFunction = (server, context) =>
         "create_task",
         {
             title: "Create Task(s)",
-            description: `Create one or more tasks in a project. Supports batch creation.
+            description: `Create one or more tasks (任务) in a project (清单). Supports batch creation.
 
 WHEN TO USE:
-- Add new tasks to a project or inbox
-- Create tasks with due dates, priorities, reminders
-- Create tasks with sub-tasks (checklist items)
+- Add new tasks to a project or inbox (收集箱)
+- Create tasks with due dates (截止日期), priorities (优先级), reminders (提醒)
+- Create tasks with sub-tasks (子任务/检查项)
 
 REQUIRED (per task):
-- title: Task name
-- projectId: Target project ID, or "inbox" for inbox
+- title: Task name (任务标题)
+- projectId: Target project ID (清单ID), or "inbox" for inbox (收集箱)
 
 OPTIONAL (per task):
-- description: Task notes (auto-maps to correct field)
-- dueDate: ISO 8601 format (e.g., "2025-11-25T17:00:00+0800")
-- startDate: ISO 8601 format
-- priority: 0=none, 1=low, 3=medium, 5=high
-- isAllDay: true for all-day tasks
+- description: Task notes (任务备注, auto-maps to correct field)
+- dueDate: ISO 8601 format (截止日期, e.g., "2025-11-25T17:00:00+0800")
+- startDate: ISO 8601 format (开始日期)
+- priority: 0=none (无), 1=low (低), 3=medium (中), 5=high (高)
+- isAllDay: true for all-day tasks (全天任务)
 - timeZone: e.g., "America/Los_Angeles"
 - reminders: ["TRIGGER:PT0S"] (at due time), ["TRIGGER:-PT30M"] (30min before)
-- repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for recurring tasks
-- items: Sub-task array [{title, status: 0|1}] - creates CHECKLIST type
+- repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for recurring tasks (重复任务)
+- items: Sub-task array (子任务列表) [{title, status: 0|1}] - creates CHECKLIST type
 
 INPUT FORMAT: { "tasks": [{ "title": "...", "projectId": "..." }, ...] }
 
-⚠️ INBOX NOTE: When using "inbox", returned tasks have projectId like "inbox1023997016". Use this actual ID for update/delete/complete operations.
+⚠️ INBOX NOTE: When using "inbox" (收集箱), returned tasks have projectId like "inbox1023997016". Use this actual ID for update/delete/complete operations.
 
 BATCH BEHAVIOR: Non-atomic - some may succeed while others fail. Check summary.failed > 0 for failures.`,
             inputSchema: {

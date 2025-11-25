@@ -12,14 +12,14 @@ export const registerListProjects: ToolRegistrationFunction = (server, context) 
         "list_projects",
         {
             title: "List Projects",
-            description: `Retrieve all projects (folders/lists) for the current user.
+            description: `Retrieve all projects (清单/folders/lists) for the current user.
 
 WHEN TO USE:
-- Get an overview of all projects
-- Find a project ID before operating on tasks
-- Check project names, colors, and view modes
+- Get an overview of all projects (查看所有清单)
+- Find a project ID before operating on tasks (查找清单ID)
+- Check project names (名称), colors (颜色), and view modes (视图模式)
 
-RETURNS: Project list with id, name, color, viewMode, permissions, kind (TASK/NOTE).
+RETURNS: Project list with id, name (名称), color (颜色), viewMode (视图模式), permissions, kind (TASK=任务清单/NOTE=笔记清单).
 
 💡 TIP: After getting the project list, use 'list_tasks' with projectId to get tasks, or 'get_project_data' for complete project data including tasks.`,
             inputSchema: {},

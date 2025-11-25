@@ -172,71 +172,71 @@ export const registerListTasks: ToolRegistrationFunction = (server, context) => 
         "list_tasks",
         {
             title: "List Tasks",
-            description: `List and filter tasks across one or more projects.
+            description: `List and filter tasks (任务) across one or more projects (清单).
 
 WHEN TO USE:
-- Find tasks due today, this week, or overdue
-- Filter tasks by priority or date range
-- Search tasks across multiple projects or inbox
+- Find tasks due today (今天的任务), this week (本周任务), or overdue (逾期任务)
+- Filter tasks by priority (优先级) or date range (日期范围)
+- Search tasks across multiple projects (清单) or inbox (收集箱)
 - Get a filtered subset of tasks
 
 WHEN NOT TO USE:
 - Need all tasks in one project without filtering → use 'get_project_data'
 - Need a single specific task → use 'get_task'
 
-QUICK FILTERS (preset):
-- "today": Tasks due today
-- "tomorrow": Tasks due tomorrow
-- "thisWeek": Tasks due this week
-- "overdue": Past-due tasks
+QUICK FILTERS (preset 快速筛选):
+- "today": Tasks due today (今天的任务)
+- "tomorrow": Tasks due tomorrow (明天的任务)
+- "thisWeek": Tasks due this week (本周任务)
+- "overdue": Past-due tasks (逾期任务)
 
 OPTIONAL FILTERS:
-- projectId: Single ID, array of IDs, or "inbox" (omit for all projects)
-- dueDateFrom/dueDateTo: Custom date range (ISO 8601)
-- priority: [0=none, 1=low, 3=medium, 5=high]
+- projectId: Single ID, array of IDs, or "inbox" (收集箱) (omit for all projects/所有清单)
+- dueDateFrom/dueDateTo: Custom date range (自定义日期范围, ISO 8601)
+- priority: [0=none (无), 1=low (低), 3=medium (中), 5=high (高)]
 
 SORTING:
-- sortBy: "dueDate" (default), "priority", "createdTime"
-- sortOrder: "asc" (default), "desc"
+- sortBy: "dueDate" (截止日期, default), "priority" (优先级), "createdTime" (创建时间)
+- sortOrder: "asc" (升序, default), "desc" (降序)
 
-⚠️ LIMITATION: Only returns UNCOMPLETED tasks (status=0). Completed tasks not available.
+⚠️ LIMITATION: Only returns UNCOMPLETED tasks (未完成任务, status=0). Completed tasks not available.
 
 EXAMPLES:
-- Today's tasks: { "preset": "today" }
-- High priority from inbox: { "projectId": "inbox", "priority": [5] }`,
+- Today's tasks (今天的任务): { "preset": "today" }
+- High priority from inbox (收集箱高优先级): { "projectId": "inbox", "priority": [5] }`,
             inputSchema: {
                 projectId: z
                     .union([z.string(), z.array(z.string())])
                     .optional()
-                    .describe('Project ID(s) to filter. Use "inbox" for inbox tasks. If omitted, searches all projects.'),
+                    .describe('Project ID(s) (清单ID) to filter. Use "inbox" for inbox tasks (收集箱). If omitted, searches all projects (所有清单).'),
                 dueDateFrom: z
                     .string()
                     .optional()
-                    .describe("Filter tasks with due date >= this value (ISO 8601 format)"),
+                    .describe("Filter tasks with due date >= this value (截止日期起始, ISO 8601 format)"),
                 dueDateTo: z
                     .string()
                     .optional()
-                    .describe("Filter tasks with due date <= this value (ISO 8601 format)"),
+                    .describe("Filter tasks with due date <= this value (截止日期结束, ISO 8601 format)"),
                 priority: z
                     .union([z.number(), z.array(z.number())])
                     .optional()
-                    .describe("Filter by priority: 0=none, 1=low, 3=medium, 5=high"),
+                    .describe("Filter by priority (优先级): 0=none (无), 1=low (低), 3=medium (中), 5=high (高)"),
                 preset: z
                     .enum(["today", "tomorrow", "thisWeek", "overdue"])
                     .optional()
-                    .describe("Quick date filter preset"),
+                    .describe("Quick date filter preset (快速筛选): today (今天), tomorrow (明天), thisWeek (本周), overdue (逾期)"),
                 limit: z
                     .number()
                     .optional()
-                    .describe("Maximum number of tasks to return (default 50, max 200)"),
+                    .describe("Maximum number of tasks to return (最大返回数量, default 50, max 200)"),
                 sortBy: z
                     .enum(["dueDate", "priority", "createdTime"])
                     .optional()
-                    .describe("Sort field (default: dueDate)"),
+                    .describe("Sort field (排序字段): dueDate (截止日期, default), priority (优先级), createdTime (创建时间)"),
                 sortOrder: z
                     .enum(["asc", "desc"])
                     .optional()
-                    .describe("Sort order (default: asc)"),
+                    .describe("Sort order (排序方向): asc (升序, default), desc (降序)"),
             },
             outputSchema: z.object({
                 tasks: z.array(z.any()),

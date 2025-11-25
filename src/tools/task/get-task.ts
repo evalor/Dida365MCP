@@ -12,29 +12,29 @@ export const registerGetTask: ToolRegistrationFunction = (server, context) => {
         "get_task",
         {
             title: "Get Task",
-            description: `Retrieve detailed information about a specific task.
+            description: `Retrieve detailed information about a specific task (任务).
 
 WHEN TO USE:
-- View complete task details (title, description, dates, priority)
+- View complete task details (title/标题, description/描述, dates/日期, priority/优先级)
 - Check task status before updating or completing
 - Verify a task exists
 
 WHEN NOT TO USE:
 - List multiple tasks → use 'list_tasks'
-- Get all tasks in a project → use 'get_project_data' or 'list_tasks'
+- Get all tasks in a project (清单) → use 'get_project_data' or 'list_tasks'
 
-REQUIRED: projectId, taskId
+REQUIRED: projectId (清单ID), taskId (任务ID)
 
 RESPONSE FIELDS:
 - content: Description for TEXT tasks (no sub-tasks)
-- desc: Description for CHECKLIST tasks (with sub-tasks)
+- desc: Description for CHECKLIST tasks (with sub-tasks/子任务)
 - kind: "TEXT" or "CHECKLIST"
-- items: Sub-task list (CHECKLIST only)
+- items: Sub-task list (子任务列表, CHECKLIST only)
 
 NOTE: When creating/updating, use unified 'description' parameter which auto-maps to the correct field.`,
             inputSchema: {
-                projectId: z.string().describe("Project ID (required)"),
-                taskId: z.string().describe("Task ID (required)"),
+                projectId: z.string().describe("Project ID (清单ID, required)"),
+                taskId: z.string().describe("Task ID (任务ID, required)"),
             },
             outputSchema: z.object({
                 id: z.string(),

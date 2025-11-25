@@ -309,6 +309,28 @@ npm run debug:hot  # 使用 tsx watch 运行（实验性）
 
 > **注意**：在只读模式下，仅可用读取操作（`get_auth_url`、`check_auth_status`、`revoke_auth`、`list_projects`、`get_project`、`get_project_data`、`list_tasks`、`get_task`）。所有写入/删除操作均被禁用以确保安全。
 
+## 📚 MCP 资源
+
+此服务器提供 MCP 资源以帮助 LLM 理解中文术语：
+
+| 资源名称 | URI | 描述 |
+|---------|-----|------|
+| `terminology` | `dida365://terminology/glossary` | 中英术语对照表，将中文术语映射到英文参数 |
+
+### 术语资源
+
+术语资源提供全面的对照表，帮助 LLM：
+- 将中文术语如"清单"（project）、"收集箱"（inbox）、"任务"（task）映射到正确的工具参数
+- 理解优先级等级：高=5、中=3、低=1、无=0
+- 将常见的中文用户请求转换为适当的工具调用
+
+**示例映射：**
+| 中文请求 | 英文含义 | 使用的工具 |
+|---------|---------|-----------|
+| 把任务添加到收集箱 | Add task to inbox | `create_task`，参数 `projectId: "inbox"` |
+| 创建新清单 | Create new project | `create_project` |
+| 查看今天的任务 | View today's tasks | `list_tasks`，参数 `preset: "today"` |
+
 ## 📁 项目结构
 
 ```
@@ -320,6 +342,9 @@ src/
 ├── token.ts              # 令牌持久化
 ├── utils/                # 工具模块
 │   └── batch.ts          # 批量执行工具
+├── resources/            # MCP 资源
+│   ├── index.ts          # 资源注册
+│   └── terminology.ts    # 中英双语术语对照表
 └── tools/                # MCP 工具（15 个）
     ├── auth/             # OAuth 工具（3 个）
     ├── project/          # 项目管理（6 个）
@@ -338,10 +363,11 @@ src/
 - [x] 批量操作支持（批量创建/更新/删除/完成任务）
 - [x] 任务列表查询（跨项目查询、日期/优先级过滤）
 - [x] 收集箱任务操作支持
+- [x] 中英双语工具描述
+- [x] MCP 术语对照表资源
 
 ### 🚀 下一步计划
 
-- [ ] 优化工具描述，增强 LLM 集成
 - [ ] 添加参数以限制MCP可访问的ProjectId
 
 ### 💡 未来展望

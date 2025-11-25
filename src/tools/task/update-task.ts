@@ -22,19 +22,19 @@ const ChecklistItemSchema = z.object({
 
 // Single task update schema
 const TaskUpdateSchema = z.object({
-    taskId: z.string().describe("Task ID (required)"),
-    projectId: z.string().describe("Project ID (required)"),
-    title: z.string().optional().describe("Task title (optional)"),
-    description: z.string().optional().describe("Task description/notes. Auto-mapped: to 'content' for TEXT tasks, to 'desc' for CHECKLIST tasks (with items)"),
-    isAllDay: z.boolean().optional().describe("Is all-day task (optional)"),
-    startDate: z.string().optional().describe("Start time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
-    dueDate: z.string().optional().describe("Due time, format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
-    timeZone: z.string().optional().describe("Time zone (optional)"),
-    reminders: z.array(z.string()).optional().describe("Reminder list (optional)"),
-    repeatFlag: z.string().optional().describe("Repeat rule (optional)"),
-    priority: z.number().optional().describe("Priority: 0=none, 1=low, 3=medium, 5=high (optional)"),
-    sortOrder: z.number().optional().describe("Sort order number (optional)"),
-    items: z.array(ChecklistItemSchema).optional().describe("Sub-task list. When provided, task becomes CHECKLIST type"),
+    taskId: z.string().describe("Task ID (任务ID, required)"),
+    projectId: z.string().describe("Project ID (清单ID, required)"),
+    title: z.string().optional().describe("Task title (任务标题, optional)"),
+    description: z.string().optional().describe("Task description/notes (任务描述/备注). Auto-mapped: to 'content' for TEXT tasks, to 'desc' for CHECKLIST tasks (with items)"),
+    isAllDay: z.boolean().optional().describe("Is all-day task (全天任务, optional)"),
+    startDate: z.string().optional().describe("Start time (开始日期), format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
+    dueDate: z.string().optional().describe("Due time (截止日期), format yyyy-MM-dd'T'HH:mm:ssZ (optional)"),
+    timeZone: z.string().optional().describe("Time zone (时区, optional)"),
+    reminders: z.array(z.string()).optional().describe("Reminder list (提醒列表, optional)"),
+    repeatFlag: z.string().optional().describe("Repeat rule (重复规则, optional)"),
+    priority: z.number().optional().describe("Priority (优先级): 0=none (无), 1=low (低), 3=medium (中), 5=high (高) (optional)"),
+    sortOrder: z.number().optional().describe("Sort order number (排序序号, optional)"),
+    items: z.array(ChecklistItemSchema).optional().describe("Sub-task list (子任务/检查项列表). When provided, task becomes CHECKLIST type"),
 });
 
 // Task update type
@@ -45,28 +45,28 @@ export const registerUpdateTask: ToolRegistrationFunction = (server, context) =>
         "update_task",
         {
             title: "Update Task(s)",
-            description: `Update one or more existing tasks. Supports batch updates.
+            description: `Update one or more existing tasks (任务). Supports batch updates.
 
 WHEN TO USE:
-- Modify task title, description, dates, or priority
-- Change due date or add reminders
-- Add/update sub-tasks (items)
+- Modify task title (标题), description (描述), dates (日期), or priority (优先级)
+- Change due date (截止日期) or add reminders (提醒)
+- Add/update sub-tasks (子任务/检查项)
 - Reschedule or reprioritize tasks
 
 REQUIRED (per task):
-- taskId: Task to update
-- projectId: Project containing the task
+- taskId: Task to update (任务ID)
+- projectId: Project containing the task (清单ID)
 
 OPTIONAL (only provided fields are updated):
-- title: New task title
-- description: New notes (auto-maps to correct field)
-- dueDate: ISO 8601 format (e.g., "2025-11-25T17:00:00+0800")
-- startDate: ISO 8601 format
-- priority: 0=none, 1=low, 3=medium, 5=high
-- isAllDay: true for all-day tasks
-- reminders: ["TRIGGER:PT0S"]
-- repeatFlag: Recurrence rule
-- items: Sub-task array [{title, status: 0|1}]
+- title: New task title (新标题)
+- description: New notes (新描述, auto-maps to correct field)
+- dueDate: ISO 8601 format (截止日期, e.g., "2025-11-25T17:00:00+0800")
+- startDate: ISO 8601 format (开始日期)
+- priority: 0=none (无), 1=low (低), 3=medium (中), 5=high (高)
+- isAllDay: true for all-day tasks (全天任务)
+- reminders: ["TRIGGER:PT0S"] (提醒)
+- repeatFlag: Recurrence rule (重复规则)
+- items: Sub-task array (子任务列表) [{title, status: 0|1}]
 
 INPUT FORMAT: { "tasks": [{ "taskId": "...", "projectId": "...", ...updates }, ...] }
 

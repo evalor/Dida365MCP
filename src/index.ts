@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { loadOAuthConfig, printConfigInfo, validateOAuthConfig, isReadOnly, type OAuth2Config } from "./config.js";
 import { OAuthManager } from "./oauth.js";
 import { registerAllTools } from "./tools/index.js";
+import { registerAllResources } from "./resources/index.js";
 
 // ============================================================================
 // Configuration & Initialization
@@ -57,6 +58,13 @@ registerAllTools(server, { oauthManager }, readOnlyMode);
 if (readOnlyMode) {
     console.error('⚠️  Read-Only Mode: Write/Delete tools are hidden');
 }
+
+// ============================================================================
+// Resource Registration
+// ============================================================================
+
+// Register all resources with the server (terminology glossary, etc.)
+registerAllResources(server);
 
 // ============================================================================
 // Server Startup
