@@ -63,8 +63,7 @@ export class OAuthManager {
     async getAuthorizationUrl(): Promise<string> {
         // If authorization is already in progress, return existing URL (idempotent)
         if (this.hasValidPendingAuthorizationData()) {
-            // Safe to assert non-null because hasValidPendingAuthorizationData() checks it
-            return this.currentAuthUrl as string;
+            return this.currentAuthUrl!;
         }
 
         // If we reach here during PENDING state, it means we have an inconsistent state
@@ -224,7 +223,7 @@ export class OAuthManager {
             // Ensure state is correct
             if (!this.stateManager.isAuthorized()) {
                 this.stateManager.setAuthorized();
-                // If we were in pending state, clean up authorization data
+                // Clean up any pending authorization data when transitioning to authorized
                 this.cleanupAuthorizationState();
             }
 
