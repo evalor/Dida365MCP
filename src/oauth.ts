@@ -62,20 +62,16 @@ export class OAuthManager {
      */
     async getAuthorizationUrl(): Promise<string> {
         // If authorization is already in progress, return existing URL (idempotent)
-        if (this.isValidPendingState()) {
-            return this.currentAuthUrl!;
+        if (this.hasValidPendingAuthorizationData()) {
+            // Safe to assert non-null because hasValidPendingAuthorizationData() checks it
+            return this.currentAuthUrl as string;
         }
 
         // If we reach here during PENDING state, it means we have an inconsistent state
         // (e.g., currentAuthUrl or currentState is missing). Clean up before proceeding.
         if (this.stateManager.isPending()) {
             console.error('Inconsistent authorization state detected, cleaning up...');
-            if (this.callbackServer) {
-                this.callbackServer.close();
-                this.callbackServer = null;
-            }
-            this.currentState = null;
-            this.currentAuthUrl = null;
+            this.cleanupAuthorizationState();
         }
 
         // Generate random state (prevent CSRF)
@@ -132,10 +128,7 @@ export class OAuthManager {
             this.stateManager.setError(errorMsg);
         } finally {
             // Cleanup
-            this.callbackServer?.close();
-            this.callbackServer = null;
-            this.currentState = null;
-            this.currentAuthUrl = null;
+            this.cleanupAuthorizationState();
         }
     }
 
@@ -194,11 +187,26 @@ export class OAuthManager {
     }
 
     /**
+     * Clean up authorization state and resources
+     * 
+     * Closes callback server if running and clears current auth URL and state.
+     * This ensures a clean slate before starting a new authorization flow.
+     */
+    private cleanupAuthorizationState(): void {
+        if (this.callbackServer) {
+            this.callbackServer.close();
+            this.callbackServer = null;
+        }
+        this.currentState = null;
+        this.currentAuthUrl = null;
+    }
+
+    /**
      * Check if there's a valid pending authorization state
      * 
      * @returns {boolean} True if authorization is pending with valid URL and state
      */
-    private isValidPendingState(): boolean {
+    private hasValidPendingAuthorizationData(): boolean {
         return this.stateManager.isPending() && 
                this.currentAuthUrl !== null && 
                this.currentState !== null;
@@ -272,15 +280,8 @@ export class OAuthManager {
         this.tokenManager.clearToken();
         this.stateManager.setNotAuthorized();
 
-        // If callback server is running, close it
-        if (this.callbackServer) {
-            this.callbackServer.close();
-            this.callbackServer = null;
-        }
-
-        // Clear auth URL and state
-        this.currentAuthUrl = null;
-        this.currentState = null;
+        // Clean up authorization state and resources
+        this.cleanupAuthorizationState();
 
         console.error('Authorization revoked, token cleared');
     }
