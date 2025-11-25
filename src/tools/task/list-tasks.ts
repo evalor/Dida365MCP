@@ -172,34 +172,38 @@ export const registerListTasks: ToolRegistrationFunction = (server, context) => 
         "list_tasks",
         {
             title: "List Tasks",
-            description: `List and filter tasks from projects.
+            description: `List and filter tasks across one or more projects.
 
-FILTERING OPTIONS:
-- projectId: Single project ID, array of IDs, or "inbox" for inbox tasks
-- preset: Quick filters - "today", "tomorrow", "thisWeek", "overdue"
-- dueDateFrom/dueDateTo: Custom date range (ISO 8601 format)
-- priority: Filter by priority levels (0=none, 1=low, 3=medium, 5=high)
+WHEN TO USE:
+- Find tasks due today, this week, or overdue
+- Filter tasks by priority or date range
+- Search tasks across multiple projects or inbox
+- Get a filtered subset of tasks
+
+WHEN NOT TO USE:
+- Need all tasks in one project without filtering → use 'get_project_data'
+- Need a single specific task → use 'get_task'
+
+QUICK FILTERS (preset):
+- "today": Tasks due today
+- "tomorrow": Tasks due tomorrow  
+- "thisWeek": Tasks due this week
+- "overdue": Past-due tasks
+
+OPTIONAL FILTERS:
+- projectId: Single ID, array of IDs, or "inbox" (omit for all projects)
+- dueDateFrom/dueDateTo: Custom date range (ISO 8601)
+- priority: [0=none, 1=low, 3=medium, 5=high]
 
 SORTING:
-- sortBy: "dueDate" (default), "priority", or "createdTime"
-- sortOrder: "asc" (default) or "desc"
+- sortBy: "dueDate" (default), "priority", "createdTime"
+- sortOrder: "asc" (default), "desc"
 
-LIMITS:
-- limit: Max tasks to return (default 50, max 200)
-
-⚠️ IMPORTANT: Only returns UNCOMPLETED tasks (status=0). Completed tasks are not available via API.
-
-RESPONSE TASK FIELDS:
-- content: Task description for TEXT tasks (no sub-tasks)
-- desc: Task description for CHECKLIST tasks (with sub-tasks/items)
-- kind: Task type - "TEXT" (simple task), "CHECKLIST" (task with sub-tasks)
-
-NOTE: When creating/updating tasks, use the unified 'description' parameter which auto-maps to the correct field.
+⚠️ LIMITATION: Only returns UNCOMPLETED tasks (status=0). Completed tasks not available.
 
 EXAMPLES:
 - Today's tasks: { "preset": "today" }
-- High priority: { "priority": [5] }
-- This week from inbox: { "projectId": "inbox", "preset": "thisWeek" }`,
+- High priority from inbox: { "projectId": "inbox", "priority": [5] }`,
             inputSchema: {
                 projectId: z
                     .union([z.string(), z.array(z.string())])

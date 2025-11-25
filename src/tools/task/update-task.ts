@@ -47,38 +47,30 @@ export const registerUpdateTask: ToolRegistrationFunction = (server, context) =>
             title: "Update Task(s)",
             description: `Update one or more existing tasks. Supports batch updates.
 
-INPUT FORMAT:
-{ "tasks": [{ "taskId": "xxx", "projectId": "yyy", ...updates }, ...] }
+WHEN TO USE:
+- Modify task title, description, dates, or priority
+- Change due date or add reminders
+- Add/update sub-tasks (items)
+- Reschedule or reprioritize tasks
 
-REQUIRED per task:
-- taskId: ID of the task to update
-- projectId: Project ID containing the task
+REQUIRED (per task):
+- taskId: Task to update
+- projectId: Project containing the task
 
-OPTIONAL per task (only provided fields are updated):
+OPTIONAL (only provided fields are updated):
 - title: New task title
-- description: Task description
-- dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
-- startDate: Start date (ISO 8601)
+- description: New notes (auto-maps to correct field)
+- dueDate: ISO 8601 format (e.g., "2025-11-25T17:00:00+0800")
+- startDate: ISO 8601 format
 - priority: 0=none, 1=low, 3=medium, 5=high
 - isAllDay: true for all-day tasks
-- timeZone: e.g. "America/Los_Angeles"
-- reminders: ["TRIGGER:PT0S"] (at due time)
-- repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for daily repeat
-- items: Sub-tasks array [{title, status: 0|1}]. When provided, task becomes CHECKLIST type.
+- reminders: ["TRIGGER:PT0S"]
+- repeatFlag: Recurrence rule
+- items: Sub-task array [{title, status: 0|1}]
 
-BEHAVIOR:
-- NOT atomic: Some tasks may succeed while others fail
-- Check summary.failed > 0 for failures
-- Use failedItems array to retry failed tasks
+INPUT FORMAT: { "tasks": [{ "taskId": "...", "projectId": "...", ...updates }, ...] }
 
-EXAMPLE (single):
-{ "tasks": [{ "taskId": "task123", "projectId": "proj456", "priority": 5 }] }
-
-EXAMPLE (batch):
-{ "tasks": [
-  { "taskId": "task123", "projectId": "proj456", "priority": 5 },
-  { "taskId": "task789", "projectId": "proj456", "title": "Updated title" }
-]}`,
+BATCH BEHAVIOR: Non-atomic - some may succeed while others fail. Check summary.failed > 0.`,
             inputSchema: {
                 tasks: z.array(TaskUpdateSchema).min(1).describe("Array of tasks to update"),
             },

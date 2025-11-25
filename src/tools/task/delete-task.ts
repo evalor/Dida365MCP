@@ -22,32 +22,27 @@ export const registerDeleteTask: ToolRegistrationFunction = (server, context) =>
         "delete_task",
         {
             title: "Delete Task(s)",
-            description: `Delete one or more tasks from projects. Supports batch deletion.
+            description: `Permanently delete one or more tasks. Supports batch deletion.
 
-⚠️ WARNING: This operation cannot be undone!
+⚠️ DESTRUCTIVE: This action cannot be undone!
 
-INPUT FORMAT:
-{ "tasks": [{ "projectId": "xxx", "taskId": "yyy" }, ...] }
+WHEN TO USE:
+- User explicitly requests to remove/delete a task
+- Cleaning up unwanted tasks
 
-REQUIRED per task:
-- projectId: Project ID containing the task
-- taskId: ID of the task to delete
+WHEN NOT TO USE:
+- Complete a task → use 'complete_task'
+- Archive a task (not supported by API)
 
-BEHAVIOR:
-- NOT atomic: Some tasks may succeed while others fail
-- Check summary.failed > 0 for failures
-- Use failedItems array to retry failed tasks
+REQUIRED (per task):
+- projectId: Project containing the task
+- taskId: Task to delete
 
-⚠️ NOTE: This API is idempotent - deleting a non-existent task will still return success. Use 'get_task' first if you need to verify the task exists.
+INPUT FORMAT: { "tasks": [{ "projectId": "...", "taskId": "..." }, ...] }
 
-EXAMPLE (single):
-{ "tasks": [{ "projectId": "abc123", "taskId": "task456" }] }
+⚠️ IDEMPOTENT: Deleting a non-existent task returns success. Use 'get_task' first to verify existence if needed.
 
-EXAMPLE (batch):
-{ "tasks": [
-  { "projectId": "abc123", "taskId": "task456" },
-  { "projectId": "abc123", "taskId": "task789" }
-]}`,
+BATCH BEHAVIOR: Non-atomic - some may succeed while others fail. Check summary.failed > 0.`,
             inputSchema: {
                 tasks: z.array(TaskRefSchema).min(1).describe("Array of tasks to delete"),
             },

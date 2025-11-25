@@ -24,28 +24,25 @@ export const registerCompleteTask: ToolRegistrationFunction = (server, context) 
             title: "Complete Task(s)",
             description: `Mark one or more tasks as completed. Supports batch completion.
 
-INPUT FORMAT:
-{ "tasks": [{ "projectId": "xxx", "taskId": "yyy" }, ...] }
+WHEN TO USE:
+- User finished a task and wants to mark it done
+- Batch complete multiple related tasks
 
-REQUIRED per task:
-- projectId: Project ID containing the task
-- taskId: ID of the task to complete
+WHEN NOT TO USE:
+- Delete a task permanently → use 'delete_task'
+- Update other task properties → use 'update_task'
 
-BEHAVIOR:
-- NOT atomic: Some tasks may succeed while others fail
-- Check summary.failed > 0 for failures
-- Use failedItems array to retry failed tasks
+REQUIRED (per task):
+- projectId: Project containing the task
+- taskId: Task to mark complete
 
-⚠️ NOTE: This API is idempotent - completing a non-existent or already completed task will still return success. Use 'get_task' first if you need to verify the task exists.
+INPUT FORMAT: { "tasks": [{ "projectId": "...", "taskId": "..." }, ...] }
 
-EXAMPLE (single):
-{ "tasks": [{ "projectId": "abc123", "taskId": "task456" }] }
+⚠️ IDEMPOTENT: Completing an already-completed or non-existent task returns success. Use 'get_task' first to verify if needed.
 
-EXAMPLE (batch):
-{ "tasks": [
-  { "projectId": "abc123", "taskId": "task456" },
-  { "projectId": "abc123", "taskId": "task789" }
-]}`,
+⚠️ NOTE: Completed tasks are no longer returned by list_tasks or get_project_data.
+
+BATCH BEHAVIOR: Non-atomic - some may succeed while others fail. Check summary.failed > 0.`,
             inputSchema: {
                 tasks: z.array(TaskRefSchema).min(1).describe("Array of tasks to complete"),
             },

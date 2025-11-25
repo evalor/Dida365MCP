@@ -12,7 +12,19 @@ export const registerDeleteProject: ToolRegistrationFunction = (server, context)
         "delete_project",
         {
             title: "Delete Project",
-            description: "Delete a project by its ID. Warning: This action cannot be undone. All tasks within the project will also be deleted.",
+            description: `Permanently delete a project and all its contents.
+
+⚠️ DESTRUCTIVE: This action cannot be undone. All tasks within the project will also be deleted.
+
+WHEN TO USE:
+- User explicitly requests to delete a project
+- Cleaning up unused/empty projects
+
+WHEN NOT TO USE:
+- Just archiving or hiding a project (not supported)
+- Moving tasks to another project first → use update_task
+
+REQUIRED: projectId`,
             inputSchema: {
                 projectId: z.string().describe("The unique ID of the project to delete"),
             },
