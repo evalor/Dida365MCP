@@ -55,8 +55,8 @@ REQUIRED per task:
 - projectId: Project ID or "inbox" for inbox tasks
 
 OPTIONAL per task:
-- content: Task content/notes
-- desc: Task description
+- content: Task content/notes (⚠️ see IMPORTANT note below)
+- desc: Task description (recommended for tasks with sub-tasks)
 - dueDate: Due date (ISO 8601: "2025-11-25T17:00:00+0800")
 - startDate: Start date (ISO 8601)
 - priority: 0=none, 1=low, 3=medium, 5=high
@@ -65,6 +65,9 @@ OPTIONAL per task:
 - reminders: ["TRIGGER:PT0S"] (at due time), ["TRIGGER:-PT30M"] (30min before)
 - repeatFlag: "RRULE:FREQ=DAILY;INTERVAL=1" for daily repeat
 - items: Sub-tasks array [{title, status: 0|1}]
+
+⚠️ IMPORTANT - content vs desc:
+When a task has "items" (sub-tasks), it becomes a CHECKLIST task. The API internally uses the "content" field to store checklist data, which will OVERWRITE any content you provide. Use "desc" instead for task descriptions when using sub-tasks.
 
 BEHAVIOR:
 - NOT atomic: Some tasks may succeed while others fail
