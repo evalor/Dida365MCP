@@ -146,6 +146,9 @@ export const APP_CONFIG = (() => {
             // OAuth endpoints based on region
             AUTH_ENDPOINT: endpoints.AUTH_ENDPOINT,
             TOKEN_ENDPOINT: endpoints.TOKEN_ENDPOINT,
+
+            // Authorization timeout (10 minutes in milliseconds)
+            AUTH_TIMEOUT_MS: 10 * 60 * 1000,
         },
 
         // API Configuration

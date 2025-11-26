@@ -34,7 +34,7 @@ export class OAuthCallbackServer {
      * @param {number} timeoutMs - Timeout in milliseconds, default 10 minutes
      * @returns {Promise<OAuthCallbackResult>} Authorization code and state
      */
-    async waitForCallback(state: string, timeoutMs: number = 10 * 60 * 1000): Promise<OAuthCallbackResult> {
+    async waitForCallback(state: string, timeoutMs: number = APP_CONFIG.OAUTH.AUTH_TIMEOUT_MS): Promise<OAuthCallbackResult> {
         this.pendingState = state;
 
         return new Promise((resolve, reject) => {
