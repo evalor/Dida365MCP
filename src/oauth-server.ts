@@ -31,10 +31,10 @@ export class OAuthCallbackServer {
      * Start server and wait for authorization callback
      * 
      * @param {string} state - CSRF protection state parameter
-     * @param {number} timeoutMs - Timeout in milliseconds, default 5 minutes
+     * @param {number} timeoutMs - Timeout in milliseconds, default 10 minutes
      * @returns {Promise<OAuthCallbackResult>} Authorization code and state
      */
-    async waitForCallback(state: string, timeoutMs: number = 5 * 60 * 1000): Promise<OAuthCallbackResult> {
+    async waitForCallback(state: string, timeoutMs: number = 10 * 60 * 1000): Promise<OAuthCallbackResult> {
         this.pendingState = state;
 
         return new Promise((resolve, reject) => {
@@ -57,7 +57,7 @@ export class OAuthCallbackServer {
             // Set timeout
             this.timeoutHandle = setTimeout(() => {
                 this.close();
-                reject(new Error('Authorization timeout (5 minutes)'));
+                reject(new Error('Authorization timeout (10 minutes)'));
             }, timeoutMs);
 
             // Error handling

@@ -87,7 +87,7 @@ export class AuthStateManager {
     }
 
     /**
-     * Check if authorization timeout (5 minutes)
+     * Check if authorization timeout (10 minutes)
      * 
      * @returns {boolean} Whether timed out
      */
@@ -95,7 +95,7 @@ export class AuthStateManager {
         if (!this.authStartTime) {
             return false;
         }
-        return Date.now() - this.authStartTime > 5 * 60 * 1000;
+        return Date.now() - this.authStartTime > 10 * 60 * 1000;
     }
 
     /**
@@ -127,7 +127,7 @@ export class AuthStateManager {
                 break;
             case AuthState.PENDING:
                 const elapsed = this.authStartTime ? Math.floor((Date.now() - this.authStartTime) / 1000) : 0;
-                message = `Waiting for authorization (${elapsed}s elapsed, timeout in ${300 - elapsed}s)`;
+                message = `Waiting for authorization (${elapsed}s elapsed, timeout in ${600 - elapsed}s)`;
                 break;
             case AuthState.AUTHORIZED:
                 message = 'Successfully authorized';
@@ -167,5 +167,14 @@ export class AuthStateManager {
      */
     isPending(): boolean {
         return this.getState() === AuthState.PENDING;
+    }
+
+    /**
+     * Get authorization start time
+     * 
+     * @returns {number | undefined} Start time timestamp or undefined if not pending
+     */
+    getAuthStartTime(): number | undefined {
+        return this.authStartTime;
     }
 }
