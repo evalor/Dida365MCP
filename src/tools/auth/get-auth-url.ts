@@ -11,7 +11,7 @@ export const registerGetAuthUrl: ToolRegistrationFunction = (server, context) =>
         "get_auth_url",
         {
             title: "Get Authorization URL",
-            description: "Use ONLY when a Dida365 MCP tool (task/project operations) fails with an authorization/OAuth error (e.g. missing, expired, or invalid token), or the user explicitly asks to start/redo Dida365 authorization. Not for generic OAuth of other services. Provides a short‑lived URL (≈5 min) to open in a browser; starts a local callback server to capture the authorization code.",
+            description: "Use ONLY when a Dida365 MCP tool (task/project operations) fails with an authorization/OAuth error (e.g. missing, expired, or invalid token), or the user explicitly asks to start/redo Dida365 authorization. Not for generic OAuth of other services. Provides a URL (≈10 min) to open in a browser; starts a local callback server to capture the authorization code.",
             inputSchema: {},
             outputSchema: {
                 auth_url: z.string(),
@@ -22,11 +22,14 @@ export const registerGetAuthUrl: ToolRegistrationFunction = (server, context) =>
         async () => {
             try {
                 const authUrl = await context.oauthManager.getAuthorizationUrl();
+                
+                // Get remaining time (will be 600s for new auth, or remaining time for existing)
+                const remainingTime = context.oauthManager.getRemainingAuthTime();
 
                 const output = {
                     auth_url: authUrl,
-                    expires_in: 300, // 5 minutes
-                    message: "Please open this URL in your browser to authorize the application. The link is valid for 5 minutes.",
+                    expires_in: remainingTime,
+                    message: `Please open this URL in your browser to authorize the application. The link is valid for ${Math.floor(remainingTime / 60)} minutes.`,
                 };
 
                 return {
