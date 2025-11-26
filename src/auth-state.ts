@@ -106,7 +106,7 @@ export class AuthStateManager {
     getState(): AuthState {
         // If waiting for authorization and timed out, auto-transition to error state
         if (this.currentState === AuthState.PENDING && this.isAuthTimeout()) {
-            this.setError('Authorization timeout (exceeded 5 minutes)');
+            this.setError('Authorization timeout (exceeded 10 minutes)');
         }
         return this.currentState;
     }
