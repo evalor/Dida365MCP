@@ -24,9 +24,6 @@ export class OAuthManager {
     private currentState: string | null = null;
     private currentAuthUrl: string | null = null;
     private validationContext: TokenValidationContext;
-    
-    // Authorization timeout in milliseconds (10 minutes)
-    private static readonly AUTH_TIMEOUT_MS = 10 * 60 * 1000;
 
     /**
      * Create an OAuthManager instance
@@ -110,7 +107,7 @@ export class OAuthManager {
 
         try {
             // Wait for authorization callback with 10 minute timeout
-            const result = await this.callbackServer.waitForCallback(state, OAuthManager.AUTH_TIMEOUT_MS);
+            const result = await this.callbackServer.waitForCallback(state, APP_CONFIG.OAUTH.AUTH_TIMEOUT_MS);
 
             console.error(`Received authorization code: ${result.code.substring(0, 10)}...`);
 
@@ -316,7 +313,7 @@ export class OAuthManager {
         }
         
         const elapsed = Date.now() - startTime;
-        const remaining = OAuthManager.AUTH_TIMEOUT_MS - elapsed;
+        const remaining = APP_CONFIG.OAUTH.AUTH_TIMEOUT_MS - elapsed;
         
         return remaining > 0 ? Math.floor(remaining / 1000) : 0;
     }

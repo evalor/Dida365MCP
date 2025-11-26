@@ -4,6 +4,8 @@
  * Manages OAuth authorization state machine
  */
 
+import { APP_CONFIG } from './config.js';
+
 /**
  * Authorization state enum
  */
@@ -95,7 +97,7 @@ export class AuthStateManager {
         if (!this.authStartTime) {
             return false;
         }
-        return Date.now() - this.authStartTime > 10 * 60 * 1000;
+        return Date.now() - this.authStartTime > APP_CONFIG.OAUTH.AUTH_TIMEOUT_MS;
     }
 
     /**
@@ -127,7 +129,8 @@ export class AuthStateManager {
                 break;
             case AuthState.PENDING:
                 const elapsed = this.authStartTime ? Math.floor((Date.now() - this.authStartTime) / 1000) : 0;
-                message = `Waiting for authorization (${elapsed}s elapsed, timeout in ${600 - elapsed}s)`;
+                const timeoutSeconds = Math.floor(APP_CONFIG.OAUTH.AUTH_TIMEOUT_MS / 1000);
+                message = `Waiting for authorization (${elapsed}s elapsed, timeout in ${timeoutSeconds - elapsed}s)`;
                 break;
             case AuthState.AUTHORIZED:
                 message = 'Successfully authorized';
