@@ -25,11 +25,20 @@ export const registerGetAuthUrl: ToolRegistrationFunction = (server, context) =>
                 
                 // Get remaining time (will be 600s for new auth, or remaining time for existing)
                 const remainingTime = context.oauthManager.getRemainingAuthTime();
+                
+                // Format message based on remaining time
+                let timeMessage: string;
+                if (remainingTime >= 60) {
+                    const minutes = Math.floor(remainingTime / 60);
+                    timeMessage = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+                } else {
+                    timeMessage = `${remainingTime} second${remainingTime !== 1 ? 's' : ''}`;
+                }
 
                 const output = {
                     auth_url: authUrl,
                     expires_in: remainingTime,
-                    message: `Please open this URL in your browser to authorize the application. The link is valid for ${Math.floor(remainingTime / 60)} minutes.`,
+                    message: `Please open this URL in your browser to authorize the application. The link is valid for ${timeMessage}.`,
                 };
 
                 return {
